@@ -1,0 +1,14 @@
+IV = c:/iverilog/bin/iverilog
+VVP = c:/iverilog/bin/vvp
+
+rule iv
+  command = $IV -g2012 -o $out $in
+  
+rule vvp
+  command = $VVP $in
+
+build decode.vvp: iv decode.sv decode-tb.sv
+build decode-tb.dmp: vvp decode.vvp
+
+build rv.vvp: iv decode.sv registers.sv control.sv rv.sv rv-tb.sv
+build rv-tb.dmp: vvp rv.vvp
