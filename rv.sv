@@ -36,14 +36,16 @@ module rv(clk, bus, addr, rst);
 
   wire [4:0] reg_idx;
   wire pc_en, pc_inc, mem_read, mem_write, reg_en, reg_write, a_bus, a_addr, a_write, b_bus, b_addr, b_write;
+  wire alu_bus, alu_addr;
   wire mwrite = mem_write & clk;
 
   registers r(.clk(clk), .rst(rst), .bus(bus), .reg_idx(reg_idx), .reg_en(reg_en), .reg_write(reg_write));
   mem m(.addr(addr), .bus(bus), .write(mwrite), .read(mem_read));
+  alu ar(.bus(bus), .addr(addr), .a(a), .b(b), .bus_en(alu_bus), .addr_en(alu_addr));
   control c(.clk(clk), .pc(pc), .bus(bus), .addr(addr), .reset(rst), .reg_idx(reg_idx),
             .pc_en(pc_en), .pc_inc(pc_inc), .mem_write(mem_write), .mem_read(mem_read), .reg_en(reg_en),
             .reg_write(reg_write), .a_bus(a_bus), .a_addr(a_addr), .a_write(a_write),
-            .b_bus(b_bus), .b_addr(b_addr), .b_write(b_write));
+            .b_bus(b_bus), .b_addr(b_addr), .b_write(b_write), .alu_bus(alu_bus), .alu_addr(alu_addr));
   
   always @(posedge rst) begin
     a <= 0;
