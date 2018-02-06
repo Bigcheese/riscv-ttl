@@ -35,17 +35,24 @@ module rv(clk, bus, addr, rst);
   reg [31:0] pc;
 
   wire [4:0] reg_idx;
-  wire pc_en, pc_inc, mem_read, mem_write, reg_en, reg_write, a_bus, a_addr, a_write, b_bus, b_addr, b_write;
+  wire pc_addr, pc_bus, pc_inc, pc_write;
+  wire mem_read, mem_write;
+  wire reg_en, reg_write;
+  wire a_bus, a_addr, a_write, b_bus, b_addr, b_write;
   wire alu_bus, alu_addr;
+  wire [3:0] alu_op;
+  wire alu_eq;
   wire mwrite = mem_write & clk;
 
   registers r(.clk(clk), .rst(rst), .bus(bus), .reg_idx(reg_idx), .reg_en(reg_en), .reg_write(reg_write));
   mem m(.addr(addr), .bus(bus), .write(mwrite), .read(mem_read));
-  alu ar(.bus(bus), .addr(addr), .a(a), .b(b), .bus_en(alu_bus), .addr_en(alu_addr));
-  control c(.clk(clk), .pc(pc), .bus(bus), .addr(addr), .reset(rst), .reg_idx(reg_idx),
-            .pc_en(pc_en), .pc_inc(pc_inc), .mem_write(mem_write), .mem_read(mem_read), .reg_en(reg_en),
+  alu ar(.bus(bus), .addr(addr), .a(a), .b(b), .bus_en(alu_bus), .addr_en(alu_addr), .op(alu_op), .alu_eq(alu_eq));
+  control c(.clk(clk), .bus(bus), .addr(addr), .reset(rst), .reg_idx(reg_idx),
+            .pc_addr(pc_addr), .pc_bus(pc_bus), .pc_inc(pc_inc), .pc_write(pc_write),
+            .mem_write(mem_write), .mem_read(mem_read), .reg_en(reg_en),
             .reg_write(reg_write), .a_bus(a_bus), .a_addr(a_addr), .a_write(a_write),
-            .b_bus(b_bus), .b_addr(b_addr), .b_write(b_write), .alu_bus(alu_bus), .alu_addr(alu_addr));
+            .b_bus(b_bus), .b_addr(b_addr), .b_write(b_write),
+            .alu_bus(alu_bus), .alu_addr(alu_addr), .alu_op(alu_op), .alu_eq(alu_eq));
   
   always @(posedge rst) begin
     a <= 0;
@@ -55,11 +62,12 @@ module rv(clk, bus, addr, rst);
 
   assign bus = a_bus ? a :
                b_bus ? b :
+               pc_bus ? pc :
                'z;
 
-  assign addr = pc_en ? pc : 
-                a_addr ? a :
+  assign addr = a_addr ? a :
                 b_addr ? b :
+                pc_addr ? pc :
                 'z;
 
   always @(posedge clk) begin
@@ -69,5 +77,7 @@ module rv(clk, bus, addr, rst);
       b <= bus;
     if (pc_inc)
       pc <= pc + 4;
+    if (pc_write)
+      pc <= bus;
   end
 endmodule

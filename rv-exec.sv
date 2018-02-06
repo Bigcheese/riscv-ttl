@@ -21,18 +21,37 @@ module main;
     r.m.mem[addr + 3] = data[31:24];
   endtask
 
+  function integer readMem32(bit [31:0] addr);
+  endfunction
+
+  always @(negedge clk) begin
+    if (r.c.inst[6:0] == 7'b1110011) begin
+      for (bob = 0; bob < 32; bob = bob + 1) begin
+        $display("x%0d = %d", bob, r.r.regs[bob]);
+      end
+      $finish();
+    end
+  end
+
   integer bob;
+  string input_file;
+  string output_file;
 
   initial begin
-    $dumpfile("rv-tb.dmp");
+    $value$plusargs("bin=%s", input_file);
+    $value$plusargs("out=%s", output_file);
+    $dumpfile(output_file);
     $dumpvars();
-    $monitor("addr=%b, bus=%b mem42=%d, x1=%d, x2=%d", addr, bus, r.m.mem[42], r.r.regs[1], r.r.regs[2]);
-    bob = $fopen("test/add.bin", "rb");                 
+    $monitor("addr=%b, bus=%b mem42=%d, x1=%d, x2=%d", addr, bus, r.m.mem[42], r.r.regs[1], r.r.regs[2]);   
+    bob = $fopen(input_file, "rb");
     $fread(r.m.mem, bob);
     $fclose(bob);
     #1 reset = 1;
     #1 reset = 0;
-    #40;
+    #80;
+    for (bob = 0; bob < 32; bob = bob + 1) begin
+      $display("x%0d = %d", bob, r.r.regs[bob]);
+    end
     $finish();
   end
 endmodule

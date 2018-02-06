@@ -6,13 +6,13 @@ OBJCOPY = $LLVM/llvm-objcopy
 
 rule iv
   command = $IV -g2012 -o $out $in
-  
+
 rule vvp
-  command = $VVP $in
-  
+  command = $VVP $in $flags
+
 rule as
   command = $MC -triple riscv32 -filetype obj -o $out $in
-  
+
 rule bin
   command = $OBJCOPY -O=binary $in $out
 
@@ -25,5 +25,12 @@ build rv-tb.dmp: vvp rv.vvp
 build test/add.o: as test/add.s
 build test/add.bin: bin test/add.o
 
-build rv-exec.vvp: iv decode.sv registers.sv alu.sv control.sv rv.sv rv-exec.sv | test/add.bin
-build rv-exec.dmp: vvp rv-exec.vvp
+build test/branch.o: as test/branch.s
+build test/branch.bin: bin test/branch.o
+
+build rv-exec.vvp: iv decode.sv registers.sv alu.sv control.sv rv.sv rv-exec.sv
+build rv-exec.dmp: vvp rv-exec.vvp | test/add.bin
+  flags = +out=rv-exec.dmp +bin=test/add.bin
+
+build branch.vcd: vvp rv-exec.vvp | test/branch.bin
+  flags = +out=branch.vcd +bin=test/branch.bin
