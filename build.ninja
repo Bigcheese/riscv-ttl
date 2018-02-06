@@ -29,8 +29,8 @@ build test/branch.o: as test/branch.s
 build test/branch.bin: bin test/branch.o
 
 build rv-exec.vvp: iv decode.sv registers.sv alu.sv control.sv rv.sv rv-exec.sv
-build rv-exec.dmp: vvp rv-exec.vvp | test/add.bin
-  flags = +out=rv-exec.dmp +bin=test/add.bin
+build add.vcd: vvp rv-exec.vvp | test/add.bin
+  flags = +out=vcd.dmp +bin=test/add.bin
 
 build branch.vcd: vvp rv-exec.vvp | test/branch.bin
   flags = +out=branch.vcd +bin=test/branch.bin

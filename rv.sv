@@ -41,7 +41,7 @@ module rv(clk, bus, addr, rst);
   wire a_bus, a_addr, a_write, b_bus, b_addr, b_write;
   wire alu_bus, alu_addr;
   wire [3:0] alu_op;
-  wire alu_eq;
+  wire alu_eq, alu_lt, alu_ge;
   wire mwrite = mem_write & clk;
 
   registers r(.clk(clk), .rst(rst), .bus(bus), .reg_idx(reg_idx), .reg_en(reg_en), .reg_write(reg_write));
@@ -52,7 +52,8 @@ module rv(clk, bus, addr, rst);
             .mem_write(mem_write), .mem_read(mem_read), .reg_en(reg_en),
             .reg_write(reg_write), .a_bus(a_bus), .a_addr(a_addr), .a_write(a_write),
             .b_bus(b_bus), .b_addr(b_addr), .b_write(b_write),
-            .alu_bus(alu_bus), .alu_addr(alu_addr), .alu_op(alu_op), .alu_eq(alu_eq));
+            .alu_bus(alu_bus), .alu_addr(alu_addr), .alu_op(alu_op), .alu_eq(alu_eq),
+            .alu_lt(alu_lt), .alu_ge(alu_ge));
   
   always @(posedge rst) begin
     a <= 0;

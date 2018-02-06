@@ -6,7 +6,9 @@ module alu(
     input bus_en,
     input addr_en,
     input [3:0] op,
-    output alu_eq
+    output alu_eq,
+    output alu_lt,
+    output alu_ge
   );
   
   enum {OR, XOR, AND, SL, SR, ADD, SUB} OP;
@@ -27,6 +29,8 @@ module alu(
   wire ge = a >= b;
   
   assign alu_eq = eq;
+  assign alu_lt = lt;
+  assign alu_ge = ge;
 
   assign bus = bus_en ? result : 'z;
   assign addr = addr_en ? result : 'z;
