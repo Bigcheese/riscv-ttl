@@ -2,6 +2,7 @@ IV = c:/iverilog/bin/iverilog
 VVP = c:/iverilog/bin/vvp
 LLVM = k:/Build/llvm-project/llvm/Release/bin
 MC = $LLVM/llvm-mc
+CLANG = $LLVM/clang
 OBJCOPY = $LLVM/llvm-objcopy
 
 rule iv
@@ -11,7 +12,7 @@ rule vvp
   command = $VVP $in $flags
 
 rule as
-  command = $MC -triple riscv32 -filetype obj -o $out $in
+  command = $CLANG -target riscv32 -c -o $out $in
 
 rule bin
   command = $OBJCOPY -O=binary $in $out
@@ -25,12 +26,19 @@ build rv-tb.dmp: vvp rv.vvp
 build test/add.o: as test/add.s
 build test/add.bin: bin test/add.o
 
+build test/alu.o: as test/alu.S
+build test/alu.bin: bin test/alu.o
+
 build test/branch.o: as test/branch.s
 build test/branch.bin: bin test/branch.o
 
 build rv-exec.vvp: iv decode.sv registers.sv alu.sv control.sv rv.sv rv-exec.sv
+
 build add.vcd: vvp rv-exec.vvp | test/add.bin
   flags = +out=add.vcd +bin=test/add.bin
+  
+build alu.vcd: vvp rv-exec.vvp | test/alu.bin
+  flags = +out=alu.vcd +bin=test/alu.bin
 
 build branch.vcd: vvp rv-exec.vvp | test/branch.bin
   flags = +out=branch.vcd +bin=test/branch.bin
