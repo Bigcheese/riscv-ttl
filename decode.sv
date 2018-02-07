@@ -9,36 +9,15 @@ module decode(clk, inst, opcode, imm, rs1, rs2, rd, func3, invalid);
   output [2:0] func3;
   output invalid;
   
-  wire [31:0] immI;
-  assign immI[31:11] = inst[31];
-  assign immI[10:5] = inst[30:25];
-  assign immI[4:1] = inst[24:21];
-  assign immI[0] = inst[20];
+  wire [31:0] immI = {{21{inst[31]}}, inst[30:20]};
+
+  wire [31:0] immS = {{21{inst[31]}}, inst[30:25], inst[11:7]};
+
+  wire [31:0] immB = {{20{inst[31]}}, inst[7], inst[30:25], inst[11:8], 1'b0};
   
-  wire [31:0] immS;
-  assign immS[31:11] = inst[31];
-  assign immS[10:5] = inst[30:25];
-  assign immS[4:1] = inst[11:8];
-  assign immS[0] = inst[7];
+  wire [31:0] immU = {inst[31:12], 12'b0};
   
-  wire [31:0] immB;
-  assign immB[31:12] = inst[31];
-  assign immB[11] = inst[7];
-  assign immB[10:5] = inst[30:25];
-  assign immB[4:1] = inst[11:8];
-  assign immB[0] = 0;
-  
-  wire [31:0] immU;
-  assign immU[31:12] = inst[31:12];
-  assign immU[11:0] = 0;
-  
-  wire [31:0] immJ;
-  assign immJ[31:20] = inst[31];
-  assign immJ[19:12] = inst[19:12];
-  assign immJ[11] = inst[20];
-  assign immJ[10:5] = inst[30:25];
-  assign immJ[4:1] = inst[24:21];
-  assign immJ[0] = 0;
+  wire [31:0] immJ = {{21{inst[31]}}, inst[19:12], inst[20], inst[30:21], 1'b0};
   
   assign rs2 = inst[24:20];
   assign rs1 = inst[19:15];
