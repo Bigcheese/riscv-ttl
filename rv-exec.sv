@@ -48,7 +48,7 @@ module main;
     $fclose(bob);
     #1 reset = 1;
     #1 reset = 0;
-    #80;
+    #10000;
     for (bob = 0; bob < 32; bob = bob + 1) begin
       $display("x%0d = %d", bob, r.r.regs[bob]);
     end
