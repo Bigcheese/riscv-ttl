@@ -9,7 +9,7 @@ module control(
     output reg_en, output reg_write,
     output a_bus, output a_addr, output a_write, output b_bus,
     output b_addr, output b_write,
-    output alu_bus, output alu_addr, output [3:0] alu_op,
+    output alu_bus, output alu_addr, output [2:0] alu_op,
     input alu_eq, input alu_lt, input alu_ge
   );
 
@@ -34,6 +34,7 @@ module control(
     B_WRITE = 1 << 15,
     ALU_BUS = 1 << 16,
     ALU_ADDR = 1 << 17,
+    ALU_ADD = 1 << 18,
 
     REG_IDX_RS1 = 1 << 20,
     REG_IDX_RS2 = 1 << 21,
@@ -65,6 +66,8 @@ module control(
   wire inst_write = control_lines[0];
   wire imm_bus = control_lines[1];
 
+  wire alu_add = control_lines[18];
+
   wire r_idx_rs1 = control_lines[20];
   wire r_idx_rs2 = control_lines[21];
   wire r_idx_rd = control_lines[22];
@@ -84,7 +87,7 @@ module control(
 
   assign bus = imm_bus ? imm : 'z;
 
-  assign alu_op = 5;
+  assign alu_op = alu_add ? 3'b000 : func3;
 
   assign reg_idx = r_idx_rs1 ? rs1 :
                    r_idx_rs2 ? rs2 :
@@ -127,7 +130,7 @@ module control(
     ops[5'b11000][2] = REG_IDX_RS2 | REG_BUS | B_WRITE | STATE_INC;
     ops[5'b11000][3] = PC_BUS | A_WRITE | STATE_INC | BRANCH_STUFF;
     ops[5'b11000][4] = IMM_BUS | B_WRITE | STATE_INC;
-    ops[5'b11000][5] = ALU_BUS | PC_WRITE | STATE_RESET;
+    ops[5'b11000][5] = ALU_BUS | ALU_ADD | PC_WRITE | STATE_RESET;
     // load
     ops[5'b00000][1] = REG_IDX_RS1 | REG_BUS | A_WRITE | STATE_INC;
     ops[5'b00000][2] = IMM_BUS | B_WRITE | STATE_INC;

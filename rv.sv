@@ -40,7 +40,7 @@ module rv(clk, bus, addr, rst);
   wire reg_en, reg_write;
   wire a_bus, a_addr, a_write, b_bus, b_addr, b_write;
   wire alu_bus, alu_addr;
-  wire [3:0] alu_op;
+  wire [2:0] alu_op;
   wire alu_eq, alu_lt, alu_ge;
   wire mwrite = mem_write & clk;
 
