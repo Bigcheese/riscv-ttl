@@ -15,27 +15,27 @@ module decode(clk, inst, opcode, imm, rs1, rs2, rd, func3, func7, invalid);
   wire [31:0] immS = {{21{inst[31]}}, inst[30:25], inst[11:7]};
 
   wire [31:0] immB = {{20{inst[31]}}, inst[7], inst[30:25], inst[11:8], 1'b0};
-  
+
   wire [31:0] immU = {inst[31:12], 12'b0};
-  
+
   wire [31:0] immJ = {{21{inst[31]}}, inst[19:12], inst[20], inst[30:21], 1'b0};
-  
+
   assign rs2 = inst[24:20];
   assign rs1 = inst[19:15];
   assign rd = inst[11:7];
-  
+
   assign func3 = inst[14:12];
   assign func7 = inst[31:25];
-  
+
   assign opcode = inst[6:2];
-  
+
   wire R = opcode == 5'b01100 ? 1 : 0;
   wire I = (opcode == 5'b00000 || opcode == 5'b00100 || opcode == 5'b11001) ? 1 : 0;
   wire S = opcode == 5'b01000 ? 1 : 0;
   wire B = opcode == 5'b11000 ? 1 : 0;
   wire U = (opcode == 5'b01101 || opcode == 5'b00101) ? 1 : 0;
   wire J = opcode == 5'b11011 ? 1 : 0;
-  
+
   assign imm = I ? immI :
                S ? immS :
                B ? immB :

@@ -9,7 +9,7 @@ module mem(addr, bus, write, read, b, bu, h, hu);
   reg [31:0] data_out;
 
   assign bus = read ? data_out : 'z;
-  
+
   wire [31:0] mem_out = {mem[addr + 3], mem[addr + 2], mem[addr + 1], mem[addr]};
   wire [31:0] mem_out_sized = b ? {{24{mem_out[7]}}, mem_out[7:0]} :
                               bu ? {24'b0, mem_out[7:0]} :
@@ -66,7 +66,7 @@ module rv(clk, bus, addr, rst);
             .b_bus(b_bus), .b_addr(b_addr), .b_write(b_write),
             .alu_bus(alu_bus), .alu_addr(alu_addr), .alu_op(alu_op), .alu_sub(alu_sub), .alu_sra(alu_sra), .alu_eq(alu_eq),
             .alu_lt(alu_lt), .alu_ltu(alu_ltu), .alu_ge(alu_ge), .alu_geu(alu_geu));
-  
+
   always @(posedge rst) begin
     a <= 0;
     b <= 0;
@@ -74,7 +74,7 @@ module rv(clk, bus, addr, rst);
     cycles <= 0;
     instret <= 0;
   end
-  
+
   always @(posedge clk) cycles = cycles + 1;
 
   assign bus = a_bus ? a :

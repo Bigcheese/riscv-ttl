@@ -69,7 +69,7 @@ module control(
   wire imm_bus = control_lines[1];
 
   wire alu_add = control_lines[18];
-  
+
   wire load_store = control_lines[19];
 
   wire r_idx_rs1 = control_lines[20];
@@ -91,15 +91,15 @@ module control(
     .rs1(rs1), .rs2(rs2), .rd(rd), .func3(func3), .func7(func7), .invalid(invalid));
 
   wire [31:0] imm_out = (opcode == 5'b00100 && (func3 == 3'b001 || func3 == 3'b101)) ? {27'b0, imm[4:0]} : imm;
-  
+
   assign bus = imm_bus ? imm_out : 'z;
-  
+
   assign mem_size = load_store ? {func3 == 3'b000, func3 == 3'b100, func3 == 3'b001, func3 == 3'b101} : 4'b0;
 
   assign alu_op = alu_add ? 3'b000 : func3;
-  
+
   assign alu_sub = opcode == 5'b01100 && func7[5];
-  
+
   assign alu_sra = (opcode == 5'b00100 || opcode == 5'b01100) && (func3 == 3'b001 || func3 == 3'b101) && inst[30];
 
   assign reg_idx = r_idx_rs1 ? rs1 :
@@ -117,10 +117,10 @@ module control(
              func3 == 3'b001 ? !alu_eq :
              func3 == 3'b100 ? alu_lt :
              func3 == 3'b110 ? alu_ltu :
-             func3 == 3'b101 ? alu_ge : 
+             func3 == 3'b101 ? alu_ge :
              func3 == 3'b111 ? alu_geu : 'z;
 
-  assign state_reset = branch_stuff ? (cmp ? 0 : 1) : control_lines[30]; 
+  assign state_reset = branch_stuff ? (cmp ? 0 : 1) : control_lines[30];
   assign state_inc = branch_stuff ? (cmp ? 1 : 0) : control_lines[31];
   assign pc_inc = branch_stuff ? (cmp ? 0 : 1) : control_lines[4];
 
@@ -180,7 +180,7 @@ module control(
     // fence
     ops[5'b00011][1] = STATE_RESET | PC_INC;
     // system
-    ops[5'b11100][1] = 0; // infloop 
+    ops[5'b11100][1] = 0; // infloop
   end
 
   always @(negedge clk) begin

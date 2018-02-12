@@ -7,7 +7,7 @@ module decode_tb;
   reg [4:0] rd;
   reg invalid;
   decode d(clk, inst, imm, rs1, rs2, rd, invalid);
-  
+
   initial begin
     $dumpfile("decode-tb.dmp");
     $dumpvars(0);

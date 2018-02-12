@@ -45,7 +45,7 @@ module main;
     $value$plusargs("out=%s", output_file);
     $dumpfile(output_file);
     $dumpvars();
-    // $monitor("addr=%b, bus=%b mem42=%d, x1=%d, x2=%d, cl=%b", addr, bus, r.m.mem[42], r.r.regs[1], r.r.regs[2], r.c.control_lines);   
+    // $monitor("addr=%b, bus=%b mem42=%d, x1=%d, x2=%d, cl=%b", addr, bus, r.m.mem[42], r.r.regs[1], r.r.regs[2], r.c.control_lines);
     bob = $fopen(input_file, "rb");
     $fread(r.m.mem, bob);
     $fclose(bob);

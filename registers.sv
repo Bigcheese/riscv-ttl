@@ -11,7 +11,7 @@ module registers(clk, rst, bus, reg_idx, reg_en, reg_write);
   initial regs[0] = 0;
 
   assign bus = reg_en ? regs[reg_idx] : 'z;
-  
+
   integer i;
   always @(posedge rst) begin
     for (i = 1; i < 32; i = i + 1)
