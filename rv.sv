@@ -1,10 +1,5 @@
-module mem(addr, bus, write, read, b, bu, h, hu);
-  input wire [31:0] addr;
-  inout wire [31:0] bus;
-  input wire write;
-  input wire read;
-  input wire b, bu, h, hu;
-
+module mem(input [31:0] addr, inout [31:0] bus, input write,
+           input read, input b, input bu, input h, input hu);
   reg [7:0] mem[8192];
   reg [31:0] data_out;
 

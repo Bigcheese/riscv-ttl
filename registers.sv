@@ -1,11 +1,5 @@
-module registers(clk, rst, bus, reg_idx, reg_en, reg_write);
-  input wire clk;
-  input wire rst;
-  inout wire [31:0] bus;
-  input wire [4:0] reg_idx;
-  input wire reg_en;
-  input wire reg_write;
-
+module registers(input clk, input rst, input [31:0] bus,
+                 input [4:0] reg_idx, input reg_en, input reg_write);
   reg [31:0] regs[32];
 
   initial regs[0] = 0;
