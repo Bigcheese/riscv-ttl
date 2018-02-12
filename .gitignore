@@ -1,0 +1,12 @@
+build/
+tools/
+gtkwave/
+riscv-tests/
+*.bin
+*.o
+*.elf
+*.vcd
+
+.ninja*
+*.vvp
+*.dmp

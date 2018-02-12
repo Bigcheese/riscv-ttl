@@ -1,4 +1,4 @@
-module decode(clk, inst, opcode, imm, rs1, rs2, rd, func3, invalid);
+module decode(clk, inst, opcode, imm, rs1, rs2, rd, func3, func7, invalid);
   input clk;
   input [31:0] inst;
   output [4:0] opcode;
@@ -7,6 +7,7 @@ module decode(clk, inst, opcode, imm, rs1, rs2, rd, func3, invalid);
   output [4:0] rs2;
   output [4:0] rd;
   output [2:0] func3;
+  output [6:0] func7;
   output invalid;
   
   wire [31:0] immI = {{21{inst[31]}}, inst[30:20]};
@@ -24,12 +25,12 @@ module decode(clk, inst, opcode, imm, rs1, rs2, rd, func3, invalid);
   assign rd = inst[11:7];
   
   assign func3 = inst[14:12];
-  wire [6:0] funct7 = inst[31:25];
+  assign func7 = inst[31:25];
   
   assign opcode = inst[6:2];
   
   wire R = opcode == 5'b01100 ? 1 : 0;
-  wire I = (opcode == 5'b00000 || opcode == 5'b00100) ? 1 : 0;
+  wire I = (opcode == 5'b00000 || opcode == 5'b00100 || opcode == 5'b11001) ? 1 : 0;
   wire S = opcode == 5'b01000 ? 1 : 0;
   wire B = opcode == 5'b11000 ? 1 : 0;
   wire U = (opcode == 5'b01101 || opcode == 5'b00101) ? 1 : 0;

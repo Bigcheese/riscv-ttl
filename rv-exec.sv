@@ -29,7 +29,10 @@ module main;
       for (bob = 0; bob < 32; bob = bob + 1) begin
         $display("x%0d = %d", bob, r.r.regs[bob]);
       end
-      $finish();
+      if (r.r.regs[3] != 1) begin
+        $display("Failed on test: %d", r.r.regs[3] >> 1);
+      end
+      $finish_and_return(r.r.regs[3] == 1 ? 0 : 1);
     end
   end
 
@@ -42,7 +45,7 @@ module main;
     $value$plusargs("out=%s", output_file);
     $dumpfile(output_file);
     $dumpvars();
-    $monitor("addr=%b, bus=%b mem42=%d, x1=%d, x2=%d, cl=%b", addr, bus, r.m.mem[42], r.r.regs[1], r.r.regs[2], r.c.control_lines);   
+    // $monitor("addr=%b, bus=%b mem42=%d, x1=%d, x2=%d, cl=%b", addr, bus, r.m.mem[42], r.r.regs[1], r.r.regs[2], r.c.control_lines);   
     bob = $fopen(input_file, "rb");
     $fread(r.m.mem, bob);
     $fclose(bob);
@@ -52,6 +55,6 @@ module main;
     for (bob = 0; bob < 32; bob = bob + 1) begin
       $display("x%0d = %d", bob, r.r.regs[bob]);
     end
-    $finish();
+    $finish_and_return(r.r.regs[3] == 1 ? 0 : 1);
   end
 endmodule

@@ -2,8 +2,9 @@ IV = c:/iverilog/bin/iverilog
 VVP = c:/iverilog/bin/vvp
 LLVM = k:/Build/llvm-project/llvm/Release/bin
 MC = $LLVM/llvm-mc
-CLANG = $LLVM/clang
+CLANG = $LLVM/clang.exe
 OBJCOPY = $LLVM/llvm-objcopy
+LD = sh -c "MSYS_NO_PATHCONV=1 wsl /home/bigcheese/riscv-tools/out/bin/riscv64-unknown-elf-ld
 
 rule iv
   command = $IV -g2012 -o $out $in
@@ -14,6 +15,9 @@ rule vvp
 rule as
   command = $CLANG -target riscv32 -c -o $out $in
 
+rule ld
+  command = $LD -Ttest/link.ld -m elf32lriscv -e 0 -o $out $in"
+  
 rule bin
   command = $OBJCOPY -O=binary $in $out
 
@@ -23,22 +27,236 @@ build decode-tb.dmp: vvp decode.vvp
 build rv.vvp: iv decode.sv registers.sv alu.sv control.sv rv.sv rv-tb.sv
 build rv-tb.dmp: vvp rv.vvp
 
-build test/add.o: as test/add.s
-build test/add.bin: bin test/add.o
-
-build test/alu.o: as test/alu.S
-build test/alu.bin: bin test/alu.o
-
-build test/branch.o: as test/branch.s
-build test/branch.bin: bin test/branch.o
-
 build rv-exec.vvp: iv decode.sv registers.sv alu.sv control.sv rv.sv rv-exec.sv
-
-build add.vcd: vvp rv-exec.vvp | test/add.bin
-  flags = +out=add.vcd +bin=test/add.bin
   
-build alu.vcd: vvp rv-exec.vvp | test/alu.bin
-  flags = +out=alu.vcd +bin=test/alu.bin
+build test/addi.o: as test/addi.S | $CLANG
+build test/addi.elf: ld test/addi.o
+build test/addi.bin: bin test/addi.elf
+build test/addi.vcd: vvp rv-exec.vvp | test/addi.bin
+  flags = +out=test/addi.vcd +bin=test/addi.bin
+  pool = console
+build test/and.o: as test/and.S | $CLANG
+build test/and.elf: ld test/and.o
+build test/and.bin: bin test/and.elf
+build test/and.vcd: vvp rv-exec.vvp | test/and.bin
+  flags = +out=test/and.vcd +bin=test/and.bin
+  pool = console
+build test/andi.o: as test/andi.S | $CLANG
+build test/andi.elf: ld test/andi.o
+build test/andi.bin: bin test/andi.elf
+build test/andi.vcd: vvp rv-exec.vvp | test/andi.bin
+  flags = +out=test/andi.vcd +bin=test/andi.bin
+  pool = console
+build test/auipc.o: as test/auipc.S | $CLANG
+build test/auipc.elf: ld test/auipc.o
+build test/auipc.bin: bin test/auipc.elf
+build test/auipc.vcd: vvp rv-exec.vvp | test/auipc.bin
+  flags = +out=test/auipc.vcd +bin=test/auipc.bin
+  pool = console
+build test/beq.o: as test/beq.S | $CLANG
+build test/beq.elf: ld test/beq.o
+build test/beq.bin: bin test/beq.elf
+build test/beq.vcd: vvp rv-exec.vvp | test/beq.bin
+  flags = +out=test/beq.vcd +bin=test/beq.bin
+  pool = console
+build test/bge.o: as test/bge.S | $CLANG
+build test/bge.elf: ld test/bge.o
+build test/bge.bin: bin test/bge.elf
+build test/bge.vcd: vvp rv-exec.vvp | test/bge.bin
+  flags = +out=test/bge.vcd +bin=test/bge.bin
+  pool = console
+build test/bgeu.o: as test/bgeu.S | $CLANG
+build test/bgeu.elf: ld test/bgeu.o
+build test/bgeu.bin: bin test/bgeu.elf
+build test/bgeu.vcd: vvp rv-exec.vvp | test/bgeu.bin
+  flags = +out=test/bgeu.vcd +bin=test/bgeu.bin
+  pool = console
+build test/blt.o: as test/blt.S | $CLANG
+build test/blt.elf: ld test/blt.o
+build test/blt.bin: bin test/blt.elf
+build test/blt.vcd: vvp rv-exec.vvp | test/blt.bin
+  flags = +out=test/blt.vcd +bin=test/blt.bin
+  pool = console
+build test/bltu.o: as test/bltu.S | $CLANG
+build test/bltu.elf: ld test/bltu.o
+build test/bltu.bin: bin test/bltu.elf
+build test/bltu.vcd: vvp rv-exec.vvp | test/bltu.bin
+  flags = +out=test/bltu.vcd +bin=test/bltu.bin
+  pool = console
+build test/bne.o: as test/bne.S | $CLANG
+build test/bne.elf: ld test/bne.o
+build test/bne.bin: bin test/bne.elf
+build test/bne.vcd: vvp rv-exec.vvp | test/bne.bin
+  flags = +out=test/bne.vcd +bin=test/bne.bin
+  pool = console
+build test/fence_i.o: as test/fence_i.S | $CLANG
+build test/fence_i.elf: ld test/fence_i.o
+build test/fence_i.bin: bin test/fence_i.elf
+build test/fence_i.vcd: vvp rv-exec.vvp | test/fence_i.bin
+  flags = +out=test/fence_i.vcd +bin=test/fence_i.bin
+  pool = console
+build test/jal.o: as test/jal.S | $CLANG
+build test/jal.elf: ld test/jal.o
+build test/jal.bin: bin test/jal.elf
+build test/jal.vcd: vvp rv-exec.vvp | test/jal.bin
+  flags = +out=test/jal.vcd +bin=test/jal.bin
+  pool = console
+build test/jalr.o: as test/jalr.S | $CLANG
+build test/jalr.elf: ld test/jalr.o
+build test/jalr.bin: bin test/jalr.elf
+build test/jalr.vcd: vvp rv-exec.vvp | test/jalr.bin
+  flags = +out=test/jalr.vcd +bin=test/jalr.bin
+  pool = console
+build test/lb.o: as test/lb.S | $CLANG
+build test/lb.elf: ld test/lb.o
+build test/lb.bin: bin test/lb.elf
+build test/lb.vcd: vvp rv-exec.vvp | test/lb.bin
+  flags = +out=test/lb.vcd +bin=test/lb.bin
+  pool = console
+build test/lbu.o: as test/lbu.S | $CLANG
+build test/lbu.elf: ld test/lbu.o
+build test/lbu.bin: bin test/lbu.elf
+build test/lbu.vcd: vvp rv-exec.vvp | test/lbu.bin
+  flags = +out=test/lbu.vcd +bin=test/lbu.bin
+  pool = console
+build test/lh.o: as test/lh.S | $CLANG
+build test/lh.elf: ld test/lh.o
+build test/lh.bin: bin test/lh.elf
+build test/lh.vcd: vvp rv-exec.vvp | test/lh.bin
+  flags = +out=test/lh.vcd +bin=test/lh.bin
+  pool = console
+build test/lhu.o: as test/lhu.S | $CLANG
+build test/lhu.elf: ld test/lhu.o
+build test/lhu.bin: bin test/lhu.elf
+build test/lhu.vcd: vvp rv-exec.vvp | test/lhu.bin
+  flags = +out=test/lhu.vcd +bin=test/lhu.bin
+  pool = console
+build test/lui.o: as test/lui.S | $CLANG
+build test/lui.elf: ld test/lui.o
+build test/lui.bin: bin test/lui.elf
+build test/lui.vcd: vvp rv-exec.vvp | test/lui.bin
+  flags = +out=test/lui.vcd +bin=test/lui.bin
+  pool = console
+build test/lw.o: as test/lw.S | $CLANG
+build test/lw.elf: ld test/lw.o
+build test/lw.bin: bin test/lw.elf
+build test/lw.vcd: vvp rv-exec.vvp | test/lw.bin
+  flags = +out=test/lw.vcd +bin=test/lw.bin
+  pool = console
+build test/or.o: as test/or.S | $CLANG
+build test/or.elf: ld test/or.o
+build test/or.bin: bin test/or.elf
+build test/or.vcd: vvp rv-exec.vvp | test/or.bin
+  flags = +out=test/or.vcd +bin=test/or.bin
+  pool = console
+build test/ori.o: as test/ori.S | $CLANG
+build test/ori.elf: ld test/ori.o
+build test/ori.bin: bin test/ori.elf
+build test/ori.vcd: vvp rv-exec.vvp | test/ori.bin
+  flags = +out=test/ori.vcd +bin=test/ori.bin
+  pool = console
+build test/sb.o: as test/sb.S | $CLANG
+build test/sb.elf: ld test/sb.o
+build test/sb.bin: bin test/sb.elf
+build test/sb.vcd: vvp rv-exec.vvp | test/sb.bin
+  flags = +out=test/sb.vcd +bin=test/sb.bin
+  pool = console
+build test/sh.o: as test/sh.S | $CLANG
+build test/sh.elf: ld test/sh.o
+build test/sh.bin: bin test/sh.elf
+build test/sh.vcd: vvp rv-exec.vvp | test/sh.bin
+  flags = +out=test/sh.vcd +bin=test/sh.bin
+  pool = console
+build test/sll.o: as test/sll.S | $CLANG
+build test/sll.elf: ld test/sll.o
+build test/sll.bin: bin test/sll.elf
+build test/sll.vcd: vvp rv-exec.vvp | test/sll.bin
+  flags = +out=test/sll.vcd +bin=test/sll.bin
+  pool = console
+build test/slli.o: as test/slli.S | $CLANG
+build test/slli.elf: ld test/slli.o
+build test/slli.bin: bin test/slli.elf
+build test/slli.vcd: vvp rv-exec.vvp | test/slli.bin
+  flags = +out=test/slli.vcd +bin=test/slli.bin
+  pool = console
+build test/slt.o: as test/slt.S | $CLANG
+build test/slt.elf: ld test/slt.o
+build test/slt.bin: bin test/slt.elf
+build test/slt.vcd: vvp rv-exec.vvp | test/slt.bin
+  flags = +out=test/slt.vcd +bin=test/slt.bin
+  pool = console
+build test/slti.o: as test/slti.S | $CLANG
+build test/slti.elf: ld test/slti.o
+build test/slti.bin: bin test/slti.elf
+build test/slti.vcd: vvp rv-exec.vvp | test/slti.bin
+  flags = +out=test/slti.vcd +bin=test/slti.bin
+  pool = console
+build test/sltiu.o: as test/sltiu.S | $CLANG
+build test/sltiu.elf: ld test/sltiu.o
+build test/sltiu.bin: bin test/sltiu.elf
+build test/sltiu.vcd: vvp rv-exec.vvp | test/sltiu.bin
+  flags = +out=test/sltiu.vcd +bin=test/sltiu.bin
+  pool = console
+build test/sltu.o: as test/sltu.S | $CLANG
+build test/sltu.elf: ld test/sltu.o
+build test/sltu.bin: bin test/sltu.elf
+build test/sltu.vcd: vvp rv-exec.vvp | test/sltu.bin
+  flags = +out=test/sltu.vcd +bin=test/sltu.bin
+  pool = console
+build test/sra.o: as test/sra.S | $CLANG
+build test/sra.elf: ld test/sra.o
+build test/sra.bin: bin test/sra.elf
+build test/sra.vcd: vvp rv-exec.vvp | test/sra.bin
+  flags = +out=test/sra.vcd +bin=test/sra.bin
+  pool = console
+build test/srai.o: as test/srai.S | $CLANG
+build test/srai.elf: ld test/srai.o
+build test/srai.bin: bin test/srai.elf
+build test/srai.vcd: vvp rv-exec.vvp | test/srai.bin
+  flags = +out=test/srai.vcd +bin=test/srai.bin
+  pool = console
+build test/srl.o: as test/srl.S | $CLANG
+build test/srl.elf: ld test/srl.o
+build test/srl.bin: bin test/srl.elf
+build test/srl.vcd: vvp rv-exec.vvp | test/srl.bin
+  flags = +out=test/srl.vcd +bin=test/srl.bin
+  pool = console
+build test/srli.o: as test/srli.S | $CLANG
+build test/srli.elf: ld test/srli.o
+build test/srli.bin: bin test/srli.elf
+build test/srli.vcd: vvp rv-exec.vvp | test/srli.bin
+  flags = +out=test/srli.vcd +bin=test/srli.bin
+  pool = console
+build test/sub.o: as test/sub.S | $CLANG
+build test/sub.elf: ld test/sub.o
+build test/sub.bin: bin test/sub.elf
+build test/sub.vcd: vvp rv-exec.vvp | test/sub.bin
+  flags = +out=test/sub.vcd +bin=test/sub.bin
+  pool = console
+build test/sw.o: as test/sw.S | $CLANG
+build test/sw.elf: ld test/sw.o
+build test/sw.bin: bin test/sw.elf
+build test/sw.vcd: vvp rv-exec.vvp | test/sw.bin
+  flags = +out=test/sw.vcd +bin=test/sw.bin
+  pool = console
+build test/xor.o: as test/xor.S | $CLANG
+build test/xor.elf: ld test/xor.o
+build test/xor.bin: bin test/xor.elf
+build test/xor.vcd: vvp rv-exec.vvp | test/xor.bin
+  flags = +out=test/xor.vcd +bin=test/xor.bin
+  pool = console
+build test/xori.o: as test/xori.S | $CLANG
+build test/xori.elf: ld test/xori.o
+build test/xori.bin: bin test/xori.elf
+build test/xori.vcd: vvp rv-exec.vvp | test/xori.bin
+  flags = +out=test/xori.vcd +bin=test/xori.bin
+  pool = console
 
-build branch.vcd: vvp rv-exec.vvp | test/branch.bin
-  flags = +out=branch.vcd +bin=test/branch.bin
+build test: phony | test/addi.vcd test/and.vcd test/andi.vcd test/auipc.vcd $
+  test/beq.vcd test/bge.vcd test/bgeu.vcd test/blt.vcd test/bltu.vcd $
+  test/bne.vcd test/fence_i.vcd test/jal.vcd test/jalr.vcd test/lb.vcd $
+  test/lbu.vcd test/lh.vcd test/lhu.vcd test/lui.vcd test/lw.vcd $
+  test/or.vcd test/ori.vcd test/sb.vcd test/sh.vcd $
+  test/sll.vcd test/slli.vcd test/slt.vcd test/slti.vcd test/sltiu.vcd $
+  test/sltu.vcd test/sra.vcd test/srai.vcd test/srl.vcd test/srli.vcd $
+  test/sub.vcd test/sw.vcd test/xor.vcd test/xori.vcd

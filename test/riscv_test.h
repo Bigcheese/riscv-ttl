@@ -105,6 +105,9 @@
 
 #define INTERRUPT_HANDLER j other_exception /* No interrupts should occur */
 
+#define RVTEST_CODE_BEGIN .text
+
+#if 0
 #define RVTEST_CODE_BEGIN                                               \
         .section .text.init;                                            \
         .align  6;                                                      \
@@ -171,13 +174,14 @@ reset_vector:                                                           \
         csrr a0, mhartid;                                               \
         mret;                                                           \
 1:
+#endif
 
 //-----------------------------------------------------------------------
 // End Macro
 //-----------------------------------------------------------------------
 
 #define RVTEST_CODE_END                                                 \
-        unimp
+        ebreak
 
 //-----------------------------------------------------------------------
 // Pass/Fail Macro
@@ -202,6 +206,9 @@ reset_vector:                                                           \
 
 #define EXTRA_DATA
 
+#define RVTEST_DATA_BEGIN
+
+#if 0
 #define RVTEST_DATA_BEGIN                                               \
         EXTRA_DATA                                                      \
         .pushsection .tohost,"aw",@progbits;                            \
@@ -209,6 +216,7 @@ reset_vector:                                                           \
         .align 6; .global fromhost; fromhost: .dword 0;                 \
         .popsection;                                                    \
         .align 4; .global begin_signature; begin_signature:
+#endif
 
 #define RVTEST_DATA_END .align 4; .global end_signature; end_signature:
 
