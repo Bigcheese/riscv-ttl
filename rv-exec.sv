@@ -25,7 +25,8 @@ module main;
   endfunction
 
   always @(negedge clk) begin
-    if (r.c.inst[6:0] == 7'b1110011) begin
+    if (r.c.inst[6:0] == 7'b1110011 && r.c.func3 == 0 &&
+        (r.c.inst[31:20] == 12'b000000000001 || r.c.inst[31:20] == 12'b000000000000)) begin
       for (bob = 0; bob < 32; bob = bob + 1) begin
         $display("x%0d = %d", bob, r.r.regs[bob]);
       end
