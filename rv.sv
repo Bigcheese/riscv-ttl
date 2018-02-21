@@ -34,12 +34,10 @@ module rv(clk, bus, addr, rst);
   input wire clk;
   reg [31:0] a;
   reg [31:0] b;
-  reg [31:0] pc;
   reg [63:0] cycles;
   reg [63:0] instret;
 
   wire [4:0] reg_idx;
-  wire pc_addr, pc_bus, pc_inc, pc_write;
   wire mem_read, mem_write;
   wire [3:0]  mem_size;
   wire reg_en, reg_write;
@@ -55,43 +53,33 @@ module rv(clk, bus, addr, rst);
   alu ar(.bus(bus), .addr(addr), .a(a), .b(b), .bus_en(alu_bus), .addr_en(alu_addr), .op(alu_op),
          .sub_en(alu_sub), .sra_en(alu_sra), .alu_eq(alu_eq), .alu_lt(alu_lt), .alu_ltu(alu_ltu), .alu_ge(alu_ge), .alu_geu(alu_geu));
   control c(.clk(clk), .bus(bus), .addr(addr), .reset(rst), .reg_idx(reg_idx),
-            .pc_addr(pc_addr), .pc_bus(pc_bus), .pc_inc(pc_inc), .pc_write(pc_write),
             .mem_write(mem_write), .mem_read(mem_read), .mem_size(mem_size), .reg_en(reg_en),
             .reg_write(reg_write), .a_bus(a_bus), .a_addr(a_addr), .a_write(a_write),
             .b_bus(b_bus), .b_addr(b_addr), .b_write(b_write),
             .alu_bus(alu_bus), .alu_addr(alu_addr), .alu_op(alu_op), .alu_sub(alu_sub), .alu_sra(alu_sra), .alu_eq(alu_eq),
             .alu_lt(alu_lt), .alu_ltu(alu_ltu), .alu_ge(alu_ge), .alu_geu(alu_geu));
 
-  always @(posedge rst) begin
-    a <= 0;
-    b <= 0;
-    pc <= 0;
-    cycles <= 0;
-    instret <= 0;
-  end
-
   always @(posedge clk) cycles = cycles + 1;
 
   assign bus = a_bus ? a :
                b_bus ? b :
-               pc_bus ? pc :
                'z;
 
   assign addr = a_addr ? a :
                 b_addr ? b :
-                pc_addr ? pc :
                 'z;
 
   always @(posedge clk) begin
-    if (a_write)
-      a <= bus;
-    if (b_write)
-      b <= bus;
-    if (pc_inc) begin
-      pc <= pc + 4;
-      instret = instret + 1;
+    if (rst) begin
+      a <= 0;
+      b <= 0;
+      cycles <= 0;
+      instret <= 0;
+    end else begin
+      if (a_write)
+        a <= bus;
+      if (b_write)
+        b <= bus;
     end
-    if (pc_write)
-      pc <= bus;
   end
 endmodule

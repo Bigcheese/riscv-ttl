@@ -4,7 +4,6 @@ module control(
     inout [31:0] addr,
     input reset,
     output [4:0] reg_idx,
-    output pc_addr, output pc_bus, output pc_inc, output pc_write,
     output mem_read, output mem_write, output [3:0] mem_size,
     output reg_en, output reg_write,
     output a_bus, output a_addr, output a_write, output b_bus,
@@ -28,10 +27,9 @@ module control(
     REG_BUS = 1 << 8,
     REG_WRITE = 1 << 9,
     A_BUS = 1 << 10,
-    A_ADDR = 1 << 11,
+
     A_WRITE = 1 << 12,
-    B_BUS = 1 << 13,
-    B_ADDR = 1 << 14,
+
     B_WRITE = 1 << 15,
     ALU_BUS = 1 << 16,
     ALU_ADDR = 1 << 17,
@@ -42,41 +40,41 @@ module control(
     REG_IDX_RS2 = 1 << 21,
     REG_IDX_RD = 1 << 22,
 
+    CSR_READ = 1 << 23,
+    CSR_WRITE = 1 << 24,
+
+    SYSTEM = 1 << 28,
     BRANCH_STUFF = 1 << 29,
     STATE_RESET = 1 << 30,
     STATE_INC = 1 << 31
   } ControlFlags;
 
-  assign pc_addr = control_lines[2];
-  assign pc_bus = control_lines[3];
-  assign pc_write = control_lines[5];
-  assign mem_read = control_lines[6];
-  assign mem_write = control_lines[7];
-  assign reg_en = control_lines[8];
-  assign reg_write = control_lines[9];
-  assign a_bus = control_lines[10];
-  assign a_addr = control_lines[11];
-  assign a_write = control_lines[12];
-  assign b_bus = control_lines[13];
-  assign b_addr = control_lines[14];
-  assign b_write = control_lines[15];
-  assign alu_bus = control_lines[16];
-  assign alu_addr = control_lines[17];
+  wire inst_write;
+  wire imm_bus;
+
+  wire pc_addr;
+  wire pc_bus;
+  wire pc_inc;
+  wire pc_write;
+
+  wire alu_add;
+
+  wire load_store;
+
+  wire r_idx_rs1;
+  wire r_idx_rs2;
+  wire r_idx_rd;
+
+  wire csr_read;
+  wire csr_write;
+
+  wire system;
+  wire branch_stuff;
 
   reg [2:0] state;
   reg [31:0] inst;
-  wire inst_write = control_lines[0];
-  wire imm_bus = control_lines[1];
+  reg [31:0] pc;
 
-  wire alu_add = control_lines[18];
-
-  wire load_store = control_lines[19];
-
-  wire r_idx_rs1 = control_lines[20];
-  wire r_idx_rs2 = control_lines[21];
-  wire r_idx_rd = control_lines[22];
-
-  wire branch_stuff = control_lines[29];
   wire state_reset;
   wire state_inc;
 
@@ -85,14 +83,22 @@ module control(
   wire [4:0] rs1, rs2, rd;
   wire [2:0] func3;
   wire [6:0] func7;
+  wire [11:0] func12;
+  wire [11:0] csr_addr;
   wire invalid;
+  wire [4:0] trap_cause;
+  wire trap;
 
   decode d(.clk(clk), .inst(inst), .opcode(opcode), .imm(imm),
-    .rs1(rs1), .rs2(rs2), .rd(rd), .func3(func3), .func7(func7), .invalid(invalid));
+    .rs1(rs1), .rs2(rs2), .rd(rd), .func3(func3), .func7(func7), .func12(func12), .invalid(invalid));
+  csr_file csr(.clk(clk), .rst(reset), .addr(csr_addr), .bus(bus), .read(csr_read), .write(csr_write),
+    .write_type(func3[1:0]), .trap(trap), .trap_cause(trap_cause));
 
   wire [31:0] imm_out = (opcode == 5'b00100 && (func3 == 3'b001 || func3 == 3'b101)) ? {27'b0, imm[4:0]} : imm;
 
   assign bus = imm_bus ? imm_out : 'z;
+  assign bus = pc_bus ? pc : 'z;
+  assign addr = pc_addr ? pc : 'z;
 
   assign mem_size = load_store ? {func3 == 3'b000, func3 == 3'b100, func3 == 3'b001, func3 == 3'b101} : 4'b0;
 
@@ -106,13 +112,6 @@ module control(
                    r_idx_rs2 ? rs2 :
                    r_idx_rd ? rd : 'z;
 
-  always @(posedge reset) begin
-    state <= 0;
-    inst <= 0;
-    control_lines <= 0;
-    instret <= 0;
-  end
-
   wire cmp = func3 == 3'b000 ? alu_eq :
              func3 == 3'b001 ? !alu_eq :
              func3 == 3'b100 ? alu_lt :
@@ -120,25 +119,91 @@ module control(
              func3 == 3'b101 ? alu_ge :
              func3 == 3'b111 ? alu_geu : 'z;
 
+  wire invalid_address = addr > 32'h80000;
+  wire invalid_fetch_address = state == 0 && invalid_address;
+  wire invalid_load_address = opcode[3] == 0 && load_store && invalid_address;
+  wire invalid_store_address = opcode[3] == 1 && load_store && invalid_address;
+
+  assign trap = invalid_fetch_address | invalid_load_address | invalid_store_address;
+  assign trap_cause = invalid_fetch_address ? 1 :
+                      invalid_load_address ? 5 :
+                      invalid_store_address ? 7 : 'x;
+
+  assign csr_addr = system && state == 1 && func3 == 3'b0 && func12 == 12'b001100000010 ? 12'h341 : func12;
+
+  assign inst_write = control_lines[0];
+
+  assign imm_bus = control_lines[1];
+
+  assign pc_addr = control_lines[2];
+  assign pc_bus = control_lines[3];
+  assign pc_inc = branch_stuff ? (cmp ? 0 : 1) : control_lines[4];
+  assign pc_write = control_lines[5];
+
+  assign mem_read = control_lines[6];
+  assign mem_write = control_lines[7];
+
+  assign reg_en = control_lines[8];
+  assign reg_write = control_lines[9] && !trap;
+
+  assign a_bus = control_lines[10];
+  assign a_addr = control_lines[11];
+  assign a_write = control_lines[12];
+
+  assign b_bus = control_lines[13];
+  assign b_addr = control_lines[14];
+  assign b_write = control_lines[15];
+
+  assign alu_bus = control_lines[16];
+  assign alu_addr = control_lines[17];
+  assign alu_add = control_lines[18];
+
+  assign load_store = control_lines[19];
+
+  assign r_idx_rs1 = control_lines[20];
+  assign r_idx_rs2 = control_lines[21];
+  assign r_idx_rd = control_lines[22];
+
+  assign csr_read = control_lines[23];
+  assign csr_write = control_lines[24];
+
+  assign system = control_lines[28];
+
+  assign branch_stuff = control_lines[29];
+
   assign state_reset = branch_stuff ? (cmp ? 0 : 1) : control_lines[30];
   assign state_inc = branch_stuff ? (cmp ? 1 : 0) : control_lines[31];
-  assign pc_inc = branch_stuff ? (cmp ? 0 : 1) : control_lines[4];
 
   always @(posedge clk) begin
-    if (inst_write)
-      inst <= bus;
-    if (state_inc)
-      state <= state + 1;
-    if (state_reset)
+    if (reset) begin
       state <= 0;
+      inst <= 0;
+      pc <= 0;
+    end else begin
+      if (inst_write && !trap)
+        inst <= bus;
+      if (state_inc && !trap)
+        state <= state + 1;
+      if (state_reset || trap)
+        state <= 0;
+      if (trap)
+        pc <= 32'h4;
+      else if (pc_inc)
+        pc <= pc + 4;
+      else if (pc_write)
+        pc <= bus;
+    end
   end
 
   reg [31:0] ops[64][6];
+  reg [31:0] sys_ops[8][6];
   integer i;
 
   initial begin
     for (i = 0; i < 64; i = i + 1)
       ops[i][0] = PC_ADDR | MEM_READ | INST_WRITE | STATE_INC;
+    for (i = 0; i < 8; i = i + 1)
+      sys_ops[i][0] = 0;
     // lui
     ops[5'b01101][1] = IMM_BUS | REG_IDX_RD | REG_WRITE | STATE_RESET | PC_INC;
     // auipc
@@ -180,12 +245,51 @@ module control(
     // fence
     ops[5'b00011][1] = STATE_RESET | PC_INC;
     // system
-    ops[5'b11100][1] = 0; // infloop
+    ops[5'b11100][1] = SYSTEM;
+    ops[5'b11100][2] = SYSTEM;
+    ops[5'b11100][3] = SYSTEM;
+    ops[5'b11100][4] = SYSTEM;
+    ops[5'b11100][5] = SYSTEM;
+
+    // mret
+    sys_ops[3'b000][1] = PC_WRITE | CSR_READ | STATE_RESET;
+
+    // read and write
+    sys_ops[3'b001][1] = CSR_READ | A_WRITE | STATE_INC; // save existing value
+    sys_ops[3'b001][2] = REG_IDX_RS1 | REG_BUS | CSR_WRITE | STATE_INC; // write new value
+    sys_ops[3'b001][3] = REG_IDX_RD | REG_WRITE | A_BUS | STATE_RESET | PC_INC; // copy saved value to dest
+
+    // read and set bits
+    sys_ops[3'b010][1] = CSR_READ | A_WRITE | STATE_INC; // save existing value
+    sys_ops[3'b010][2] = REG_IDX_RS1 | REG_BUS | CSR_WRITE | STATE_INC; // write new value
+    sys_ops[3'b010][3] = REG_IDX_RD | REG_WRITE | A_BUS | STATE_RESET | PC_INC; // copy saved value to dest
+
+    // read and clear bits
+    sys_ops[3'b011][1] = CSR_READ | A_WRITE | STATE_INC; // save existing value
+    sys_ops[3'b011][2] = REG_IDX_RS1 | REG_BUS | CSR_WRITE | STATE_INC; // write new value
+    sys_ops[3'b011][3] = REG_IDX_RD | REG_WRITE | A_BUS | STATE_RESET | PC_INC; // copy saved value to dest
+
+    // read and write imm
+    sys_ops[3'b101][1] = REG_IDX_RD | REG_WRITE | CSR_READ | STATE_INC;
+    sys_ops[3'b101][2] = IMM_BUS | CSR_WRITE | STATE_RESET | PC_INC;
+
+    // read and set bits imm
+    sys_ops[3'b110][1] = REG_IDX_RD | REG_WRITE | CSR_READ | STATE_INC;
+    sys_ops[3'b110][2] = IMM_BUS | CSR_WRITE | STATE_RESET | PC_INC;
+
+    // read and clear bits imm
+    sys_ops[3'b111][1] = REG_IDX_RD | REG_WRITE | CSR_READ | STATE_INC;
+    sys_ops[3'b111][2] = IMM_BUS | CSR_WRITE | STATE_RESET | PC_INC;
   end
 
   always @(negedge clk) begin
-    if (state == 0)
-      instret <= instret + 1;
-    control_lines <= ops[opcode][state];
+    if (reset) begin
+      control_lines <= 0;
+      instret <= 0;
+    end else begin 
+      if (state == 0)
+        instret <= instret + 1;
+      control_lines <= ops[opcode][state] & SYSTEM ? ops[opcode][state] | sys_ops[func3][state] : ops[opcode][state];
+    end
   end
 endmodule

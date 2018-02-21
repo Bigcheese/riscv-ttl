@@ -5,6 +5,8 @@
 
 #include "encoding.h"
 
+#define __MACHINE_MODE
+
 //-----------------------------------------------------------------------
 // Begin Macro
 //-----------------------------------------------------------------------
@@ -53,26 +55,10 @@
 # define CHECK_XLEN li a0, 1; slli a0, a0, 31; bltz a0, 1f; RVTEST_PASS; 1:
 #endif
 
-#define INIT_PMP                                                        \
-  la t0, 1f;                                                            \
-  csrw mtvec, t0;                                                       \
-  li t0, -1;        /* Set up a PMP to permit all accesses */           \
-  csrw pmpaddr0, t0;                                                    \
-  li t0, PMP_NAPOT | PMP_R | PMP_W | PMP_X;                             \
-  csrw pmpcfg0, t0;                                                     \
-  .align 2;                                                             \
-1:
-
-#define INIT_SATP                                                      \
-  la t0, 1f;                                                            \
-  csrw mtvec, t0;                                                       \
-  csrwi sptbr, 0;                                                       \
-  .align 2;                                                             \
-1:
+#define INIT_PMP
+#define INIT_SATP
 
 #define DELEGATE_NO_TRAPS                                               \
-  la t0, 1f;                                                            \
-  csrw mtvec, t0;                                                       \
   csrwi medeleg, 0;                                                     \
   csrwi mideleg, 0;                                                     \
   csrwi mie, 0;                                                         \
@@ -105,7 +91,54 @@
 
 #define INTERRUPT_HANDLER j other_exception /* No interrupts should occur */
 
+#if 0
 #define RVTEST_CODE_BEGIN .text
+#endif
+
+#if 1
+#define RVTEST_CODE_BEGIN \
+  .section .reset,"ax";        \
+  .global reset_vector;   \
+  .align 6; /* 64 */      \
+  j reset_vector;         \
+                          \
+  .section .tvec,"ax";         \
+  .align 2; /* 4 */       \
+  .weak mtvec_handler;    \
+  .global _start;         \
+trap_vector:                                                            \
+        /* test whether the test came from pass/fail */                 \
+        csrr t5, mcause;                                                \
+        /* if an mtvec_handler is defined, jump to it */                \
+        la t5, mtvec_handler;                                           \
+        beqz t5, 1f;                                                    \
+        jr t5;                                                          \
+        /* was it an interrupt or an exception? */                      \
+  1:    csrr t5, mcause;                                                \
+        bgez t5, handle_exception;                                      \
+        INTERRUPT_HANDLER;                                              \
+handle_exception:                                                       \
+  other_exception:                                                      \
+        /* some unhandlable exception occurred */                       \
+  1:    ori TESTNUM, TESTNUM, 1337;                                     \
+reset_vector:                                                           \
+        RISCV_MULTICORE_DISABLE;                                        \
+        INIT_SATP;                                                      \
+        INIT_PMP;                                                       \
+        DELEGATE_NO_TRAPS;                                              \
+        li TESTNUM, 0;                                                  \
+        CHECK_XLEN;                                                     \
+1:      csrwi mstatus, 0;                                               \
+        init;                                                           \
+        EXTRA_INIT;                                                     \
+        EXTRA_INIT_TIMER;                                               \
+        la t0, _start;                                                  \
+        csrw mepc, t0;                                                  \
+        csrr a0, mhartid;                                               \
+        mret;                                                           \
+  .section .text,"ax";                                                  \
+_start:
+#endif
 
 #if 0
 #define RVTEST_CODE_BEGIN                                               \

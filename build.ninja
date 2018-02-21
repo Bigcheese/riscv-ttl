@@ -24,11 +24,13 @@ rule bin
 build decode.vvp: iv decode.sv decode-tb.sv
 build decode-tb.dmp: vvp decode.vvp
 
-build rv.vvp: iv decode.sv registers.sv alu.sv control.sv rv.sv rv-tb.sv
+build rv.vvp: iv decode.sv registers.sv alu.sv csr_file.sv control.sv rv.sv $
+    rv-tb.sv
 build rv-tb.dmp: vvp rv.vvp
 
-build rv-exec.vvp: iv decode.sv registers.sv alu.sv control.sv rv.sv rv-exec.sv
-  
+build rv-exec.vvp: iv decode.sv registers.sv alu.sv csr_file.sv control.sv $
+    rv.sv rv-exec.sv
+
 build test/addi.o: as test/addi.S | $CLANG
 build test/addi.elf: ld test/addi.o
 build test/addi.bin: bin test/addi.elf
