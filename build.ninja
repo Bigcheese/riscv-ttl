@@ -251,8 +251,63 @@ build test/xori.bin: bin test/xori.elf
 build test/xori.vcd: vvp rv-exec.vvp | test/xori.bin
   flags = +out=test/xori.vcd +bin=test/xori.bin
   pool = console
+  
+build test/access.o: as test/access.S | $CLANG
+build test/access.elf: ld test/access.o
+build test/access.bin: bin test/access.elf
+build test/access.vcd: vvp rv-exec.vvp | test/access.bin
+  flags = +out=test/access.vcd +bin=test/access.bin
+  pool = console
+build test/breakpoint.o: as test/breakpoint.S | $CLANG
+build test/breakpoint.elf: ld test/breakpoint.o
+build test/breakpoint.bin: bin test/breakpoint.elf
+build test/breakpoint.vcd: vvp rv-exec.vvp | test/breakpoint.bin
+  flags = +out=test/breakpoint.vcd +bin=test/breakpoint.bin
+  pool = console
+build test/csr.o: as test/csr.S | $CLANG
+build test/csr.elf: ld test/csr.o
+build test/csr.bin: bin test/csr.elf
+build test/csr.vcd: vvp rv-exec.vvp | test/csr.bin
+  flags = +out=test/csr.vcd +bin=test/csr.bin
+  pool = console
+build test/illegal.o: as test/illegal.S | $CLANG
+build test/illegal.elf: ld test/illegal.o
+build test/illegal.bin: bin test/illegal.elf
+build test/illegal.vcd: vvp rv-exec.vvp | test/illegal.bin
+  flags = +out=test/illegal.vcd +bin=test/illegal.bin
+  pool = console
+build test/ma_addr.o: as test/ma_addr.S | $CLANG
+build test/ma_addr.elf: ld test/ma_addr.o
+build test/ma_addr.bin: bin test/ma_addr.elf
+build test/ma_addr.vcd: vvp rv-exec.vvp | test/ma_addr.bin
+  flags = +out=test/ma_addr.vcd +bin=test/ma_addr.bin
+  pool = console
+build test/ma_fetch.o: as test/ma_fetch.S | $CLANG
+build test/ma_fetch.elf: ld test/ma_fetch.o
+build test/ma_fetch.bin: bin test/ma_fetch.elf
+build test/ma_fetch.vcd: vvp rv-exec.vvp | test/ma_fetch.bin
+  flags = +out=test/ma_fetch.vcd +bin=test/ma_fetch.bin
+  pool = console
+build test/mcsr.o: as test/mcsr.S | $CLANG
+build test/mcsr.elf: ld test/mcsr.o
+build test/mcsr.bin: bin test/mcsr.elf
+build test/mcsr.vcd: vvp rv-exec.vvp | test/mcsr.bin
+  flags = +out=test/mcsr.vcd +bin=test/mcsr.bin
+  pool = console
+build test/sbreak.o: as test/sbreak.S | $CLANG
+build test/sbreak.elf: ld test/sbreak.o
+build test/sbreak.bin: bin test/sbreak.elf
+build test/sbreak.vcd: vvp rv-exec.vvp | test/sbreak.bin
+  flags = +out=test/sbreak.vcd +bin=test/sbreak.bin
+  pool = console
+build test/scall.o: as test/scall.S | $CLANG
+build test/scall.elf: ld test/scall.o
+build test/scall.bin: bin test/scall.elf
+build test/scall.vcd: vvp rv-exec.vvp | test/scall.bin
+  flags = +out=test/scall.vcd +bin=test/scall.bin
+  pool = console
 
-build test: phony | test/addi.vcd test/and.vcd test/andi.vcd test/auipc.vcd $
+build test-ui: phony | test/addi.vcd test/and.vcd test/andi.vcd test/auipc.vcd $
   test/beq.vcd test/bge.vcd test/bgeu.vcd test/blt.vcd test/bltu.vcd $
   test/bne.vcd test/fence_i.vcd test/jal.vcd test/jalr.vcd test/lb.vcd $
   test/lbu.vcd test/lh.vcd test/lhu.vcd test/lui.vcd test/lw.vcd $
@@ -260,3 +315,9 @@ build test: phony | test/addi.vcd test/and.vcd test/andi.vcd test/auipc.vcd $
   test/sll.vcd test/slli.vcd test/slt.vcd test/slti.vcd test/sltiu.vcd $
   test/sltu.vcd test/sra.vcd test/srai.vcd test/srl.vcd test/srli.vcd $
   test/sub.vcd test/sw.vcd test/xor.vcd test/xori.vcd
+
+build test-mi: phony | test/access.vcd test/breakpoint.vcd test/csr.vcd $
+  test/illegal.vcd test/ma_addr.vcd test/ma_fetch.vcd test/mcsr.vcd $
+  test/sbreak.vcd test/scall.vcd
+
+build test: phony | test-ui test-mi
