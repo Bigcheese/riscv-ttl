@@ -70,7 +70,7 @@ bad4:
 
   # Make sure SFENCE.VMA and sptbr don't trap when TVM=0.
   sfence.vma
-  csrr t0, sptbr
+  csrr t0, satp
 bad5:
   .word 0
   j fail
@@ -80,7 +80,7 @@ bad6:
   sfence.vma
   j fail
 bad7:
-  csrr t0, sptbr
+  csrr t0, satp
   j fail
 
   # Make sure SRET doesn't trap when TSR=0.
@@ -132,7 +132,7 @@ synchronous_exception:
   csrr t0, mepc
 
   # Make sure mtval contains either 0 or the instruction word.
-  csrr t2, mbadaddr
+  csrr t2, mtval
   beqz t2, 1f
   lhu t3, 0(t0)
   lhu t4, 2(t0)

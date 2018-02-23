@@ -25,7 +25,7 @@ RVTEST_CODE_BEGIN
   li TESTNUM, 2
 
 do_break:
-  sbreak
+  ebreak
   j fail
 
   TEST_PASSFAIL

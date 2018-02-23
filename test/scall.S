@@ -52,7 +52,7 @@ RVTEST_CODE_BEGIN
 
   li TESTNUM, 1
 do_scall:
-  scall
+  ecall
   j fail
 
   TEST_PASSFAIL
