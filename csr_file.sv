@@ -14,6 +14,7 @@ module csr_file(input clk, input rst, input [11:0] addr, inout [31:0] bus, input
   `define MCAUSE 12'h342
   reg [16:0] mstatus_internal;
   wire [31:0] mstatus;
+  `define MTVAL 12'h343
   wire [31:0] mtvec = 32'h4;
   reg [31:0] mscratch;
   reg [31:0] mepc;
@@ -38,6 +39,7 @@ module csr_file(input clk, input rst, input [11:0] addr, inout [31:0] bus, input
       `MSCRATCH: invalid_out = 0;
       `MEPC: invalid_out = 0;
       `MCAUSE: invalid_out = 0;
+      `MTVAL: invalid_out = 0;
       default: invalid_out = 1;
     endcase
   end
@@ -55,6 +57,7 @@ module csr_file(input clk, input rst, input [11:0] addr, inout [31:0] bus, input
         `MSCRATCH: bus_out = mscratch;
         `MEPC: bus_out = mepc;
         `MCAUSE: bus_out = {27'b0, mcause};
+        `MTVAL: bus_out = 0;
       endcase
     end
   end
