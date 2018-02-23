@@ -85,13 +85,13 @@ module control(
   wire [6:0] func7;
   wire [11:0] func12;
   wire [11:0] csr_addr;
-  wire invalid;
+  wire decode_invalid_inst;
   wire [4:0] trap_cause;
   wire trap;
   wire csr_invalid;
 
   decode d(.clk(clk), .inst(inst), .opcode(opcode), .imm(imm),
-    .rs1(rs1), .rs2(rs2), .rd(rd), .func3(func3), .func7(func7), .func12(func12), .invalid(invalid));
+    .rs1(rs1), .rs2(rs2), .rd(rd), .func3(func3), .func7(func7), .func12(func12), .invalid(decode_invalid_inst));
   csr_file csr(.clk(clk), .rst(reset), .addr(csr_addr), .bus(bus), .read(csr_read), .write(csr_write),
     .write_type(func3[1:0]), .trap(trap), .trap_cause(trap_cause), .invalid(csr_invalid));
 
@@ -124,9 +124,12 @@ module control(
   wire invalid_fetch_address = state == 0 && invalid_address;
   wire invalid_load_address = opcode[3] == 0 && load_store && invalid_address;
   wire invalid_store_address = opcode[3] == 1 && load_store && invalid_address;
+  wire invalid_inst = decode_invalid_inst && state == 1; 
 
-  assign trap = invalid_fetch_address | invalid_load_address | invalid_store_address | csr_invalid;
-  assign trap_cause = invalid_fetch_address ? 1 :
+
+  assign trap = invalid_inst | invalid_fetch_address | invalid_load_address | invalid_store_address | csr_invalid;
+  assign trap_cause = invalid_inst ? 2 :
+                      invalid_fetch_address ? 1 :
                       invalid_load_address ? 5 :
                       invalid_store_address ? 7 : 
                       csr_invalid ? 2 : 'x;

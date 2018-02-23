@@ -30,6 +30,7 @@ module decode(input clk, input [31:0] inst, output [4:0] opcode, output [31:0] i
   wire U = (opcode == 5'b01101 || opcode == 5'b00101) ? 1 : 0;
   wire J = opcode == 5'b11011 ? 1 : 0;
   wire Z = opcode == 5'b11100;
+  wire NA = opcode == 5'b00011;
 
   assign imm = I ? immI :
                S ? immS :
@@ -38,5 +39,5 @@ module decode(input clk, input [31:0] inst, output [4:0] opcode, output [31:0] i
                J ? immJ :
                Z ? immZ : 'x;
 
-  assign invalid = !(R | I | S | B| U | J | Z) || inst[1:0] != 2'b11;
+  assign invalid = !(R | I | S | B| U | J | Z | NA) || inst[1:0] != 2'b11;
 endmodule
