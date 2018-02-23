@@ -284,12 +284,6 @@ build test/ma_addr.bin: bin test/ma_addr.elf
 build test/ma_addr.vcd: vvp rv-exec.vvp | test/ma_addr.bin
   flags = +out=test/ma_addr.vcd +bin=test/ma_addr.bin
   pool = console
-build test/ma_fetch.o: as test/ma_fetch.S | $CLANG
-build test/ma_fetch.elf: ld test/ma_fetch.o
-build test/ma_fetch.bin: bin test/ma_fetch.elf
-build test/ma_fetch.vcd: vvp rv-exec.vvp | test/ma_fetch.bin
-  flags = +out=test/ma_fetch.vcd +bin=test/ma_fetch.bin
-  pool = console
 build test/mcsr.o: as test/mcsr.S | $CLANG
 build test/mcsr.elf: ld test/mcsr.o
 build test/mcsr.bin: bin test/mcsr.elf
@@ -319,7 +313,7 @@ build test-ui: phony | test/addi.vcd test/and.vcd test/andi.vcd test/auipc.vcd $
   test/sub.vcd test/sw.vcd test/xor.vcd test/xori.vcd
 
 build test-mi: phony | test/access.vcd test/breakpoint.vcd test/csr.vcd $
-  test/illegal.vcd test/ma_addr.vcd test/ma_fetch.vcd test/mcsr.vcd $
+  test/illegal.vcd test/ma_addr.vcd test/mcsr.vcd $
   test/sbreak.vcd test/scall.vcd
 
 build test: phony | test-ui test-mi
