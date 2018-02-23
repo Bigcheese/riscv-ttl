@@ -59,6 +59,12 @@ module csr_file(input clk, input rst, input [11:0] addr, inout [31:0] bus, input
     end
   end
 
+  function int csr_write_value(input [1:0] write_type, input [31:0] cur_val, input [31:0] bus);
+    return write_type == 2'b01 ? bus :
+           write_type == 2'b10 ? cur_val | (32'hffffffff & bus) :
+           write_type == 2'b11 ? cur_val & (32'hffffffff ^ bus) : 'x;
+  endfunction
+
   always @(posedge clk) begin
     if (rst) begin
       mstatus_internal <= 0;
@@ -69,16 +75,10 @@ module csr_file(input clk, input rst, input [11:0] addr, inout [31:0] bus, input
         mcause <= trap_cause;
         mepc <= bus;
       end else if (write) begin
-        case (addr)
-          `MSCRATCH: mscratch <= write_type == 2'b01 ? bus :
-                                 write_type == 2'b10 ? mscratch | (32'hffffffff & bus) :
-                                 write_type == 2'b11 ? mscratch & (32'hffffffff ^ bus) : 'x;
-          `MEPC: mepc <= write_type == 2'b01 ? bus :
-                         write_type == 2'b10 ? mepc | (32'hffffffff & bus) :
-                         write_type == 2'b11 ? mepc & (32'hffffffff ^ bus) : 'x;
-          `MCAUSE: mcause <= write_type == 2'b01 ? bus[4:0] :
-                             write_type == 2'b10 ? mcause | (5'b11111 & bus[4:0]) :
-                             write_type == 2'b11 ? mcause & (5'b11111 ^ bus[4:0]) : 'x;
+      case (addr)
+          `MSCRATCH: mscratch <= csr_write_value(write_type, mscratch, bus);
+          `MEPC: mepc <= csr_write_value(write_type, mepc, bus);
+          `MCAUSE: mcause <= csr_write_value(write_type, mcause, bus);
         endcase
       end
     end
