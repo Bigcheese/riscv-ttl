@@ -88,16 +88,17 @@ module control(
   wire invalid;
   wire [4:0] trap_cause;
   wire trap;
+  wire csr_invalid;
 
   decode d(.clk(clk), .inst(inst), .opcode(opcode), .imm(imm),
     .rs1(rs1), .rs2(rs2), .rd(rd), .func3(func3), .func7(func7), .func12(func12), .invalid(invalid));
   csr_file csr(.clk(clk), .rst(reset), .addr(csr_addr), .bus(bus), .read(csr_read), .write(csr_write),
-    .write_type(func3[1:0]), .trap(trap), .trap_cause(trap_cause));
+    .write_type(func3[1:0]), .trap(trap), .trap_cause(trap_cause), .invalid(csr_invalid));
 
   wire [31:0] imm_out = (opcode == 5'b00100 && (func3 == 3'b001 || func3 == 3'b101)) ? {27'b0, imm[4:0]} : imm;
 
   assign bus = imm_bus ? imm_out : 'z;
-  assign bus = pc_bus ? pc : 'z;
+  assign bus = pc_bus | trap ? pc : 'z;
   assign addr = pc_addr ? pc : 'z;
 
   assign mem_size = load_store ? {func3 == 3'b000, func3 == 3'b100, func3 == 3'b001, func3 == 3'b101} : 4'b0;
@@ -119,15 +120,16 @@ module control(
              func3 == 3'b101 ? alu_ge :
              func3 == 3'b111 ? alu_geu : 'z;
 
-  wire invalid_address = addr > 32'h80000;
+  wire invalid_address = addr > 32'h80000 && (alu_addr || pc_addr);
   wire invalid_fetch_address = state == 0 && invalid_address;
   wire invalid_load_address = opcode[3] == 0 && load_store && invalid_address;
   wire invalid_store_address = opcode[3] == 1 && load_store && invalid_address;
 
-  assign trap = invalid_fetch_address | invalid_load_address | invalid_store_address;
+  assign trap = invalid_fetch_address | invalid_load_address | invalid_store_address | csr_invalid;
   assign trap_cause = invalid_fetch_address ? 1 :
                       invalid_load_address ? 5 :
-                      invalid_store_address ? 7 : 'x;
+                      invalid_store_address ? 7 : 
+                      csr_invalid ? 2 : 'x;
 
   assign csr_addr = system && state == 1 && func3 == 3'b0 && func12 == 12'b001100000010 ? 12'h341 : func12;
 
@@ -289,7 +291,10 @@ module control(
     end else begin 
       if (state == 0)
         instret <= instret + 1;
-      control_lines <= ops[opcode][state] & SYSTEM ? ops[opcode][state] | sys_ops[func3][state] : ops[opcode][state];
+      if (trap)
+        control_lines <= 0;
+      else
+        control_lines <= ops[opcode][state] & SYSTEM ? ops[opcode][state] | sys_ops[func3][state] : ops[opcode][state];
     end
   end
 endmodule

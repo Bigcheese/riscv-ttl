@@ -10,7 +10,7 @@
 #include "riscv_test.h"
 #include "test_macros.h"
 
-RVTEST_RV64M
+RVTEST_RV32M
 RVTEST_CODE_BEGIN
 
   # Set up breakpoint to trap on M-mode fetches.

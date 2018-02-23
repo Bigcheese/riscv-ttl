@@ -121,11 +121,11 @@ handle_exception:                                                       \
   other_exception:                                                      \
         /* some unhandlable exception occurred */                       \
   1:    ori TESTNUM, TESTNUM, 1337;                                     \
+        j fail;                                                         \
 reset_vector:                                                           \
         RISCV_MULTICORE_DISABLE;                                        \
         INIT_SATP;                                                      \
         INIT_PMP;                                                       \
-        DELEGATE_NO_TRAPS;                                              \
         li TESTNUM, 0;                                                  \
         CHECK_XLEN;                                                     \
 1:      csrwi mstatus, 0;                                               \
