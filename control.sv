@@ -241,7 +241,7 @@ module control(
     // store
     ops[5'b01000][1] = REG_IDX_RS1 | REG_BUS | A_WRITE | STATE_INC;
     ops[5'b01000][2] = IMM_BUS | B_WRITE | STATE_INC;
-    ops[5'b01000][3] = ALU_ADDR | ALU_ADD | REG_IDX_RS2 | REG_BUS | MEM_WRITE | STATE_RESET | PC_INC;
+    ops[5'b01000][3] = ALU_ADDR | ALU_ADD | REG_IDX_RS2 | REG_BUS | LOAD_STORE | MEM_WRITE | STATE_RESET | PC_INC;
     // alu immediate
     ops[5'b00100][1] = REG_IDX_RS1 | REG_BUS | A_WRITE | STATE_INC;
     ops[5'b00100][2] = IMM_BUS | B_WRITE | STATE_INC;
