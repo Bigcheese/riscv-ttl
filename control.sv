@@ -42,6 +42,7 @@ module control(
 
     CSR_READ = 1 << 23,
     CSR_WRITE = 1 << 24,
+    MRET = 1 << 25,
 
     SYSTEM = 1 << 28,
     BRANCH_STUFF = 1 << 29,
@@ -67,6 +68,7 @@ module control(
 
   wire csr_read;
   wire csr_write;
+  wire mret;
 
   wire system;
   wire branch_stuff;
@@ -93,7 +95,7 @@ module control(
   decode d(.clk(clk), .inst(inst), .opcode(opcode), .imm(imm),
     .rs1(rs1), .rs2(rs2), .rd(rd), .func3(func3), .func7(func7), .func12(func12), .invalid(decode_invalid_inst));
   csr_file csr(.clk(clk), .rst(reset), .addr(csr_addr), .bus(bus), .read(csr_read), .write(csr_write),
-    .write_type(func3[1:0]), .trap(trap), .trap_cause(trap_cause), .invalid(csr_invalid));
+    .write_type(func3[1:0]), .trap(trap), .trap_cause(trap_cause), .ret(mret), .invalid(csr_invalid));
 
   wire [31:0] imm_out = (opcode == 5'b00100 && (func3 == 3'b001 || func3 == 3'b101)) ? {27'b0, imm[4:0]} : imm;
 
@@ -171,6 +173,7 @@ module control(
 
   assign csr_read = control_lines[23];
   assign csr_write = control_lines[24];
+  assign mret = control_lines[25];
 
   assign system = control_lines[28];
 
@@ -257,7 +260,7 @@ module control(
     ops[5'b11100][5] = SYSTEM;
 
     // mret
-    sys_ops[3'b000][1] = PC_WRITE | CSR_READ | STATE_RESET;
+    sys_ops[3'b000][1] = PC_WRITE | CSR_READ | MRET | STATE_RESET;
 
     // read and write
     sys_ops[3'b001][1] = CSR_READ | A_WRITE | STATE_INC; // save existing value

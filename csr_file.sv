@@ -1,5 +1,5 @@
 module csr_file(input clk, input rst, input [11:0] addr, inout [31:0] bus, input read, input write,
-    input [1:0] write_type, input trap, input [4:0] trap_cause, output invalid);
+    input [1:0] write_type, input trap, input [4:0] trap_cause, input ret, output invalid);
   // mstatus SD | WPRI | TSR | TW | TVM | MXR | SUM | MPRV | XS | FS | MPP M | WPRI | SPP 0 | MPIE | WPRI | SPIE 0 | UPIE 0 |
   // MIE | WPRI | SIE 0 | UIE 0
   `define MVENDORID 12'hF11
@@ -12,9 +12,9 @@ module csr_file(input clk, input rst, input [11:0] addr, inout [31:0] bus, input
   `define MSCRATCH 12'h340
   `define MEPC 12'h341
   `define MCAUSE 12'h342
-  reg [16:0] mstatus_internal;
-  wire [31:0] mstatus;
   `define MTVAL 12'h343
+  reg [2:0] mstatus_internal;
+  wire [31:0] mstatus = {19'b0, 2'b11, 3'b0, mstatus_internal[1], 3'b0, mstatus_internal[0], 3'b0};
   wire [31:0] mtvec = 32'h4;
   reg [31:0] mscratch;
   reg [31:0] mepc;
@@ -52,6 +52,7 @@ module csr_file(input clk, input rst, input [11:0] addr, inout [31:0] bus, input
         `MARCHID: bus_out = 0;
         `MIMPID: bus_out = 0;
         `MHARTID: bus_out = 0;
+        `MSTATUS: bus_out = mstatus;
         `MISA: bus_out = 1 << 30 | 1 << 8;
         `MTVEC: bus_out = mtvec;
         `MSCRATCH: bus_out = mscratch;
@@ -68,6 +69,7 @@ module csr_file(input clk, input rst, input [11:0] addr, inout [31:0] bus, input
            write_type == 2'b11 ? cur_val & (32'hffffffff ^ bus) : 'x;
   endfunction
 
+  wire [31:0] mstatus_temp = csr_write_value(write_type, mstatus, bus);
   always @(posedge clk) begin
     if (rst) begin
       mstatus_internal <= 0;
@@ -77,8 +79,14 @@ module csr_file(input clk, input rst, input [11:0] addr, inout [31:0] bus, input
       if (trap) begin
         mcause <= trap_cause;
         mepc <= bus;
+        mstatus_internal[1] <= mstatus_internal[0];
+        mstatus_internal[0] <= 0;
+      end else if (ret) begin
+        mstatus_internal[0] <= mstatus_internal[1];
+        mstatus_internal[1] <= 1;
       end else if (write) begin
       case (addr)
+          `MSTATUS: mstatus_internal <= {mstatus_temp[7], mstatus_temp[3]};
           `MSCRATCH: mscratch <= csr_write_value(write_type, mscratch, bus);
           `MEPC: mepc <= csr_write_value(write_type, mepc, bus);
           `MCAUSE: mcause <= csr_write_value(write_type, mcause, bus);
