@@ -1,28 +1,35 @@
-module mem(input [31:0] addr, inout [31:0] bus, input write,
-           input read, input b, input bu, input h, input hu);
-  reg [7:0] mem[8192];
-  reg [31:0] data_out;
+module mem #(parameter SIZE = 8192)(input clk, input [31:0] addr, input [31:0] in, output [31:0] out, input write, input b, input h);
+  reg [31:0] mem[SIZE];
+  wire [31:0] data_out;
 
-  assign bus = read ? data_out : 'z;
+  assign out = mem[addr];
 
-  wire [31:0] mem_out = {mem[addr + 3], mem[addr + 2], mem[addr + 1], mem[addr]};
-  wire [31:0] mem_out_sized = b ? {{24{mem_out[7]}}, mem_out[7:0]} :
-                              bu ? {24'b0, mem_out[7:0]} :
-                              h ? {{16{mem_out[15]}}, mem_out[15:0]} :
-                              hu ? {16'b0, mem_out[15:0]} :  mem_out ;
+  reg [7:0] in0, in1;
+  reg [16:0] in2;
 
-  always @(*) begin
-    if (write) begin
-      mem[addr] <= bus[7:0];
-      if (!b)
-        mem[addr + 1] <= bus[15:8];
-      if (!b && !h) begin
-        mem[addr + 2] <= bus[23:16];
-        mem[addr + 3] <= bus[31:24];
-      end
+  always @(b or h or in) begin
+    case ({b, h})
+    2'b10: begin
+      in0 = in[7:0];
+      in1 = mem[addr][15:8];
+      in2 = mem[addr][31:16];
     end
-    if (read) begin
-      data_out <= mem_out_sized;
+    2'b01: begin
+      in0 = in[7:0];
+      in1 = in[15:8];
+      in2 = mem[addr][31:16];
+    end
+    default: begin
+      in0 = in[7:0];
+      in1 = in[15:8];
+      in2 = in[31:16];
+    end
+    endcase
+  end
+
+  always @(posedge clk) begin
+    if (write) begin
+      mem[addr] <= {in2, in1, in0};
     end
   end
 endmodule
@@ -46,10 +53,12 @@ module rv(clk, bus, addr, rst);
   wire [2:0] alu_op;
   wire alu_sub, alu_sra;
   wire alu_eq, alu_lt, alu_ltu, alu_ge, alu_geu;
-  wire mwrite = mem_write & clk;
+  wire mwrite = mem_write;
+
+  wire [31:0] mem_out;
 
   registers r(.clk(clk), .rst(rst), .bus(bus), .reg_idx(reg_idx), .reg_en(reg_en), .reg_write(reg_write));
-  mem m(.addr(addr), .bus(bus), .write(mwrite), .read(mem_read), .b(mem_size[3]), .bu(mem_size[2]), .h(mem_size[1]), .hu(mem_size[0]));
+  mem m(.clk, .addr(addr[31:2]), .in(bus), .out(mem_out), .write(mwrite), .b(mem_size[3]), .h(mem_size[1]));
   alu ar(.bus(bus), .addr(addr), .a(a), .b(b), .bus_en(alu_bus), .addr_en(alu_addr), .op(alu_op),
          .sub_en(alu_sub), .sra_en(alu_sra), .alu_eq(alu_eq), .alu_lt(alu_lt), .alu_ltu(alu_ltu), .alu_ge(alu_ge), .alu_geu(alu_geu));
   control c(.clk(clk), .bus(bus), .addr(addr), .reset(rst), .reg_idx(reg_idx),
@@ -63,6 +72,7 @@ module rv(clk, bus, addr, rst);
 
   assign bus = a_bus ? a :
                b_bus ? b :
+               mem_read ? mem_out :
                'z;
 
   assign addr = a_addr ? a :

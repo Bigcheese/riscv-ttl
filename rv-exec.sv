@@ -27,8 +27,8 @@ module main;
   always @(negedge clk) begin
     if (r.c.inst[6:0] == 7'b1110011 && r.c.func3 == 0 &&
         (r.c.inst[31:20] == 12'b000000000001 || r.c.inst[31:20] == 12'b000000000000)) begin
-      for (bob = 0; bob < 32; bob = bob + 1) begin
-        $display("x%0d = %d", bob, r.r.regs[bob]);
+      for (i = 0; i < 32; i = i + 1) begin
+        $display("x%0d = %d", i, r.r.regs[i]);
       end
       if (r.r.regs[3] != 1) begin
         $display("Failed on test: %d", r.r.regs[3] >> 1);
@@ -37,9 +37,24 @@ module main;
     end
   end
 
-  integer bob;
+  integer bob, c;
+  integer a = 0;
+  integer i;
   string input_file;
   string output_file;
+
+  task automatic read_mem(string path);
+    reg [31:0] val;
+
+    bob = $fopen(path, "rb");
+    c = $fread(val, bob);
+    while (c == 4) begin
+      r.m.mem[a] = {val[7:0], val[15:8], val[23:16], val[31:24]};
+      a = a + 1;
+      c = $fread(val, bob);
+    end
+    $fclose(bob);
+  endtask
 
   initial begin
     $value$plusargs("bin=%s", input_file);
@@ -47,14 +62,12 @@ module main;
     $dumpfile(output_file);
     $dumpvars();
     // $monitor("addr=%b, bus=%b mem42=%d, x1=%d, x2=%d, cl=%b", addr, bus, r.m.mem[42], r.r.regs[1], r.r.regs[2], r.c.control_lines);
-    bob = $fopen(input_file, "rb");
-    $fread(r.m.mem, bob);
-    $fclose(bob);
+    read_mem(input_file);
     #1 reset = 1;
     #1 reset = 0;
     #10000;
-    for (bob = 0; bob < 32; bob = bob + 1) begin
-      $display("x%0d = %d", bob, r.r.regs[bob]);
+    for (i = 0; i < 32; i = i + 1) begin
+      $display("x%0d = %d", i, r.r.regs[i]);
     end
     $finish_and_return(r.r.regs[3] == 1 ? 0 : 1);
   end
