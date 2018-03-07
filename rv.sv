@@ -22,7 +22,38 @@ module rv(input clk, input rst, output mem_read, output mem_write, output [31:0]
   wire [31:0] control_bout;
   wire control_bus, control_addr;
 
-  assign reg_in = bus;
+  function automatic [31:0] bus_to_reg(input [31:0] bus, input [1:0] addr, input [3:0] mem_size);
+    reg [31:0] ret = 'x;
+    if (mem_size == 0)
+      return bus;
+    case (addr)
+      2'b00: case (mem_size)
+        4'b1000: ret = {{24{bus[7]}}, bus[7:0]};
+        4'b0100: ret = {24'b0, bus[7:0]};
+        4'b0010: ret = {{16{bus[15]}}, bus[15:0]};
+        4'b0001: ret = {16'b0, bus[15:0]};
+      endcase
+      2'b01: case (mem_size)
+        4'b1000: ret = {{24{bus[15]}}, bus[15:8]};
+        4'b0100: ret = {24'b0, bus[15:8]};
+        4'b0010: ret = {{16{bus[23]}}, bus[23:8]};
+        4'b0001: ret = {16'b0, bus[23:8]};
+      endcase
+      2'b10: case (mem_size)
+        4'b1000: ret = {{24{bus[23]}}, bus[23:16]};
+        4'b0100: ret = {24'b0, bus[23:16]};
+        4'b0010: ret = {{16{bus[31]}}, bus[31:16]};
+        4'b0001: ret = {16'b0, bus[31:16]};
+      endcase
+      2'b11: case (mem_size)
+        4'b1000: ret = {{24{bus[31]}}, bus[31:24]};
+        4'b0100: ret = {24'b0, bus[31:24]};
+      endcase
+    endcase
+    return ret;
+  endfunction
+
+  assign reg_in = bus_to_reg(bus, addr[1:0], mem_size);
 
   assign mem_addr = addr;
   assign mem_wdata = bus;
