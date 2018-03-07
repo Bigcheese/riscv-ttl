@@ -204,14 +204,18 @@ module control(
   end
 
   reg [31:0] ops[64][6];
-  reg [31:0] sys_ops[8][6];
-  integer i;
+  reg [31:0] sys_ops[8][4];
+  integer i, j;
 
   initial begin
     for (i = 0; i < 64; i = i + 1)
+      for (j = 0; j < 6; j = j + 1)
+        ops[i][j] = 0;
+    for (i = 0; i < 64; i = i + 1)
       ops[i][0] = PC_ADDR | MEM_READ | INST_WRITE | STATE_INC;
     for (i = 0; i < 8; i = i + 1)
-      sys_ops[i][0] = 0;
+      for (j = 0; j < 4; j = j + 1)
+        sys_ops[i][j] = 0;
     // lui
     ops[5'b01101][1] = IMM_BUS | REG_IDX_RD | REG_WRITE | STATE_RESET | PC_INC;
     // auipc
