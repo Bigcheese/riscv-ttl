@@ -1,4 +1,5 @@
-module rv(input clk, input rst, output mem_read, output mem_write, output [31:0] mem_addr, output [31:0] mem_wdata, output [3:0] mem_wstrb, input [31:0] mem_rdata);
+module rv(input clk, input rst, output mem_read, output mem_write, output [31:0] mem_addr, output [31:0] mem_wdata,
+          output [3:0] mem_wstrb, input [31:0] mem_rdata);
   reg [31:0] pc;
   reg [31:0] a;
   reg [31:0] b;
@@ -22,9 +23,10 @@ module rv(input clk, input rst, output mem_read, output mem_write, output [31:0]
   wire [31:0] control_bout;
   wire control_bus, control_addr;
 
-  function automatic [31:0] bus_to_reg(input [31:0] bus, input [1:0] addr, input [3:0] mem_size);
+  // Adjust bus before it goes into the register file for memory reads.
+  function automatic [31:0] bus_to_reg(input read, input [31:0] bus, input [1:0] addr, input [3:0] mem_size);
     reg [31:0] ret = 'x;
-    if (mem_size == 0)
+    if (mem_size == 0 || !read)
       return bus;
     case (addr)
       2'b00: case (mem_size)
@@ -53,11 +55,18 @@ module rv(input clk, input rst, output mem_read, output mem_write, output [31:0]
     return ret;
   endfunction
 
-  assign reg_in = bus_to_reg(bus, addr[1:0], mem_size);
+  // Adjust register before it goes onto the bus for a memory write.
+  function automatic [31:0] reg_to_bus(input write, input [31:0] r, input [1:0] addr, input [3:0] mem_size);
+    if (!write)
+      return r;
+    return r << (addr * 8);
+  endfunction
+
+  assign reg_in = bus_to_reg(mem_read, bus, addr[1:0], mem_size);
 
   assign mem_addr = addr;
   assign mem_wdata = bus;
-  assign mem_wstrb = mem_size;
+  assign mem_wstrb = {mem_size == 0, mem_size == 0, ~|mem_size[3:2], 1'b1} << addr[1:0];
 
   registers r(.clk, .rst, .reg_in, .reg_out, .reg_idx, .reg_write);
   alu ar(.alu_out, .a, .b, .op(alu_op), .sub_en(alu_sub), .sra_en(alu_sra), .alu_eq, .alu_lt, .alu_ltu, .alu_ge,
@@ -74,7 +83,7 @@ module rv(input clk, input rst, output mem_read, output mem_write, output [31:0]
   assign bus = a_bus ? a :
                b_bus ? b :
                mem_read ? mem_rdata :
-               reg_en ? reg_out :
+               reg_en ? reg_to_bus(mem_write, reg_out, addr[1:0], mem_size) :
                alu_bus ? alu_out :
                control_bus ? control_bout :
                'x;

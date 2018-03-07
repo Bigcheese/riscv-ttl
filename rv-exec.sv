@@ -1,35 +1,22 @@
-module mem #(parameter SIZE = 8192)(input clk, input [31:0] addr, input [31:0] in, output [31:0] out, input write, input b, input h);
+module mem #(parameter SIZE = 8192)(input clk, input [31:0] addr, input [31:0] in, output [31:0] out, input write,
+                                    input [3:0] mem_wstrb);
   reg [31:0] mem[SIZE];
   wire [31:0] data_out;
 
   assign out = mem[addr >> 2];
 
-  reg [7:0] in0, in1;
-  reg [15:0] in2;
+  reg [7:0] in0, in1, in2, in3;
 
-  always @(b or h or in or addr) begin
-    case ({b, h})
-    2'b10: begin
-      in0 = in[7:0];
-      in1 = mem[addr >> 2][15:8];
-      in2 = mem[addr >> 2][31:16];
-    end
-    2'b01: begin
-      in0 = in[7:0];
-      in1 = in[15:8];
-      in2 = mem[addr >> 2][31:16];
-    end
-    default: begin
-      in0 = in[7:0];
-      in1 = in[15:8];
-      in2 = in[31:16];
-    end
-    endcase
+  always @(mem_wstrb or in or addr) begin
+    in0 = mem_wstrb[0] ? in[7:0] : mem[addr >> 2][7:0];
+    in1 = mem_wstrb[1] ? in[15:8] : mem[addr >> 2][15:8];
+    in2 = mem_wstrb[2] ? in[23:16] : mem[addr >> 2][23:16];
+    in3 = mem_wstrb[3] ? in[31:24] : mem[addr >> 2][31:24];
   end
 
   always @(posedge clk) begin
     if (write) begin
-      mem[addr] <= {in2, in1, in0};
+      mem[addr >> 2] <= {in3, in2, in1, in0};
     end
   end
 endmodule
@@ -44,11 +31,12 @@ module main;
   wire [31:0] bus;
   wire [31:0] addr;
   wire mem_write;
+  wire [3:0] mem_wstrb;
   wire [31:0] mem_wdata;
   wire [31:0] mem_rdata;
 
-  mem m(.clk, .addr, .in(mem_wdata), .out(mem_rdata), .b(1'b0), .h(1'b0));
-  rv r(.clk, .rst(reset), .mem_write, .mem_addr(addr), .mem_wdata, .mem_rdata);
+  mem m(.clk, .addr, .in(mem_wdata), .out(mem_rdata), .write(mem_write), .mem_wstrb);
+  rv r(.clk, .rst(reset), .mem_write, .mem_addr(addr), .mem_wdata, .mem_wstrb, .mem_rdata);
 
   always #1 clk = ~clk;
 
