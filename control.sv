@@ -133,7 +133,7 @@ module control(
   assign trap_cause = invalid_inst ? 2 :
                       invalid_fetch_address ? 1 :
                       invalid_load_address ? 5 :
-                      invalid_store_address ? 7 : 
+                      invalid_store_address ? 7 :
                       csr_invalid ? 2 : 'x;
 
   assign csr_addr = system && state == 1 && func3 == 3'b0 && func12 == 12'b001100000010 ? 12'h341 : func12;
