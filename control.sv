@@ -138,14 +138,17 @@ module control(
   wire invalid_load_address = opcode[3] == 0 && load_store && invalid_address;
   wire invalid_store_address = opcode[3] == 1 && load_store && invalid_address;
   wire invalid_inst = decode_invalid_inst && state == 1; 
+  wire misaliged_addr = load_store && (|addr[1:0] && mem_size == 0) ||
+                        (addr[1:0] == 2'b11 && (mem_size[1] || mem_size[0]));
 
-
-  assign trap = invalid_inst | invalid_fetch_address | invalid_load_address | invalid_store_address | csr_invalid;
+  assign trap = invalid_inst | invalid_fetch_address | invalid_load_address | invalid_store_address | csr_invalid |
+                misaliged_addr;
   assign trap_cause = invalid_inst ? 2 :
                       invalid_fetch_address ? 1 :
                       invalid_load_address ? 5 :
                       invalid_store_address ? 7 :
-                      csr_invalid ? 2 : 'x;
+                      csr_invalid ? 2 :
+                      misaliged_addr ? 4 : 'x;
 
   assign csr_addr = system && state == 1 && func3 == 3'b0 && func12 == 12'b001100000010 ? 12'h341 : func12;
 
