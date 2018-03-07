@@ -27,10 +27,10 @@ module main;
   always @(negedge clk) begin
     if (r.c.inst[6:0] == 7'b1110011 && r.c.func3 == 0 &&
         (r.c.inst[31:20] == 12'b000000000001 || r.c.inst[31:20] == 12'b000000000000)) begin
-      for (i = 0; i < 32; i = i + 1) begin
-        $display("x%0d = %d", i, r.r.regs[i]);
-      end
       if (r.r.regs[3] != 1) begin
+        for (i = 0; i < 32; i = i + 1) begin
+          $display("x%0d = %d", i, r.r.regs[i]);
+        end
         $display("Failed on test: %d", r.r.regs[3] >> 1);
       end
       $finish_and_return(r.r.regs[3] == 1 ? 0 : 1);
