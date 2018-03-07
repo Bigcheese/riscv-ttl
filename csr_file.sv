@@ -73,8 +73,10 @@ module csr_file(input clk, input rst, input [11:0] addr, inout [31:0] bus, input
   always @(posedge clk) begin
     if (rst) begin
       mstatus_internal <= 0;
+      mscratch <= 0;
       mepc <= 0;
       mcause <= 0;
+      mtval <= 0;
     end else begin
       if (trap) begin
         mcause <= trap_cause;
