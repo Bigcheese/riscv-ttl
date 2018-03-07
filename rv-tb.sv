@@ -1,6 +1,6 @@
 module main;
   reg [31:0] bus_set;
-  reg [31:0] addr_set = 'z;
+  reg [31:0] addr_set = 'x;
   reg enable = 0;
   reg reset = 0;
   reg clk = 0;

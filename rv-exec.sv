@@ -1,14 +1,54 @@
+module mem #(parameter SIZE = 8192)(input clk, input [31:0] addr, input [31:0] in, output [31:0] out, input write, input b, input h);
+  reg [31:0] mem[SIZE];
+  wire [31:0] data_out;
+
+  assign out = mem[addr >> 2];
+
+  reg [7:0] in0, in1;
+  reg [15:0] in2;
+
+  always @(b or h or in or addr) begin
+    case ({b, h})
+    2'b10: begin
+      in0 = in[7:0];
+      in1 = mem[addr >> 2][15:8];
+      in2 = mem[addr >> 2][31:16];
+    end
+    2'b01: begin
+      in0 = in[7:0];
+      in1 = in[15:8];
+      in2 = mem[addr >> 2][31:16];
+    end
+    default: begin
+      in0 = in[7:0];
+      in1 = in[15:8];
+      in2 = in[31:16];
+    end
+    endcase
+  end
+
+  always @(posedge clk) begin
+    if (write) begin
+      mem[addr] <= {in2, in1, in0};
+    end
+  end
+endmodule
+
 module main;
   reg [31:0] bus_set;
-  reg [31:0] addr_set = 'z;
+  reg [31:0] addr_set = 'x;
   reg enable = 0;
   reg reset = 0;
   reg clk = 0;
 
   wire [31:0] bus;
   wire [31:0] addr;
+  wire mem_write;
+  wire [31:0] mem_wdata;
+  wire [31:0] mem_rdata;
 
-  rv r(.clk(clk), .bus(bus), .addr(addr), .rst(reset));
+  mem m(.clk, .addr, .in(mem_wdata), .out(mem_rdata), .b(1'b0), .h(1'b0));
+  rv r(.clk, .rst(reset), .mem_write, .mem_addr(addr), .mem_wdata, .mem_rdata);
 
   always #1 clk = ~clk;
 
@@ -49,7 +89,7 @@ module main;
     bob = $fopen(path, "rb");
     c = $fread(val, bob);
     while (c == 4) begin
-      r.m.mem[a] = {val[7:0], val[15:8], val[23:16], val[31:24]};
+      m.mem[a] = {val[7:0], val[15:8], val[23:16], val[31:24]};
       a = a + 1;
       c = $fread(val, bob);
     end

@@ -1,10 +1,7 @@
 module alu(
-    output [31:0] bus,
-    output [31:0] addr,
+    output [31:0] alu_out,
     input [31:0] a,
     input [31:0] b,
-    input bus_en,
-    input addr_en,
     input [2:0] op,
     input sub_en,
     input sra_en,
@@ -17,8 +14,6 @@ module alu(
 
   typedef enum bit [2:0] {ADD = 3'b000, SL = 3'b001, SLT = 3'b010, SLTU = 3'b011,
                           XOR = 3'b100,  OR = 3'b110, SR = 3'b101, AND = 3'b111} OP;
-
-  wire [31:0] result;
 
   wire [31:0] or_ = a | b;
   wire [31:0] xor_ = a ^ b;
@@ -41,16 +36,12 @@ module alu(
   assign alu_ge = ge;
   assign alu_geu = a >= b;
 
-  assign bus = bus_en ? result : 'z;
-  assign addr = addr_en ? result : 'z;
-
-  assign result = op == ADD ? (sub_en ? sub : add) :
-                  op == SL ? sl :
-                  op == SLT ? lt :
-                  op == SLTU ? ltu :
-                  op == XOR ? xor_ :
-                  op == OR ? or_ :
-                  op == SR ? (sra_en ? sra : sr ) :
-                  op == AND ? and_ : 'x;
-
+  assign alu_out = op == ADD ? (sub_en ? sub : add) :
+                   op == SL ? sl :
+                   op == SLT ? lt :
+                   op == SLTU ? ltu :
+                   op == XOR ? xor_ :
+                   op == OR ? or_ :
+                   op == SR ? (sra_en ? sra : sr ) :
+                   op == AND ? and_ : 'x;
 endmodule

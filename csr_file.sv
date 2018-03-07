@@ -1,4 +1,4 @@
-module csr_file(input clk, input rst, input [11:0] addr, inout [31:0] bus, input read, input write,
+module csr_file(input clk, input rst, input [11:0] addr, input [31:0] bus, output [31:0] csr_out, input read, input write,
     input [1:0] write_type, input trap, input [4:0] trap_cause, input ret, output invalid);
   // mstatus SD | WPRI | TSR | TW | TVM | MXR | SUM | MPRV | XS | FS | MPP M | WPRI | SPP 0 | MPIE | WPRI | SPIE 0 | UPIE 0 |
   // MIE | WPRI | SIE 0 | UIE 0
@@ -24,7 +24,7 @@ module csr_file(input clk, input rst, input [11:0] addr, inout [31:0] bus, input
   reg [31:0] bus_out;
   reg invalid_out;
 
-  assign bus = bus_out;
+  assign csr_out = bus_out;
   assign invalid = invalid_out & (read | write);
 
   always @(*) begin
@@ -45,22 +45,20 @@ module csr_file(input clk, input rst, input [11:0] addr, inout [31:0] bus, input
   end
 
   always @(*) begin
-    bus_out = 'z;
-    if (read) begin
-      case (addr)
-        `MVENDORID: bus_out = 0;
-        `MARCHID: bus_out = 0;
-        `MIMPID: bus_out = 0;
-        `MHARTID: bus_out = 0;
-        `MSTATUS: bus_out = mstatus;
-        `MISA: bus_out = 1 << 30 | 1 << 8;
-        `MTVEC: bus_out = mtvec;
-        `MSCRATCH: bus_out = mscratch;
-        `MEPC: bus_out = mepc;
-        `MCAUSE: bus_out = {27'b0, mcause};
-        `MTVAL: bus_out = 0;
-      endcase
-    end
+    bus_out = 'x;
+    case (addr)
+      `MVENDORID: bus_out = 0;
+      `MARCHID: bus_out = 0;
+      `MIMPID: bus_out = 0;
+      `MHARTID: bus_out = 0;
+      `MSTATUS: bus_out = mstatus;
+      `MISA: bus_out = 1 << 30 | 1 << 8;
+      `MTVEC: bus_out = mtvec;
+      `MSCRATCH: bus_out = mscratch;
+      `MEPC: bus_out = mepc;
+      `MCAUSE: bus_out = {27'b0, mcause};
+      `MTVAL: bus_out = 0;
+    endcase
   end
 
   function int csr_write_value(input [1:0] write_type, input [31:0] cur_val, input [31:0] bus);

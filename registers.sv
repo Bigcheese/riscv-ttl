@@ -1,10 +1,10 @@
-module registers(input clk, input rst, inout [31:0] bus,
-                 input [4:0] reg_idx, input reg_en, input reg_write);
+module registers(input clk, input rst, input [31:0] reg_in, output [31:0] reg_out,
+                 input [4:0] reg_idx, input reg_write);
   reg [31:0] regs[32];
 
   initial regs[0] = 0;
 
-  assign bus = reg_en ? regs[reg_idx] : 'z;
+  assign reg_out = regs[reg_idx];
 
   integer i;
   always @(posedge clk) begin
@@ -13,7 +13,7 @@ module registers(input clk, input rst, inout [31:0] bus,
         regs[i] <= 0;
     end else begin
       if (reg_write && reg_idx != 0)
-        regs[reg_idx] <= bus;
+        regs[reg_idx] <= reg_in;
     end
   end
 endmodule

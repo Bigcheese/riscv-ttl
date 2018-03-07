@@ -1,8 +1,12 @@
 module control(
     input clk,
-    inout [31:0] bus,
-    inout [31:0] addr,
     input reset,
+    input [31:0] addr,
+    input [31:0] bus,
+    output [31:0] control_aout,
+    output [31:0] control_bout,
+    output control_bus,
+    output control_addr,
     output [4:0] reg_idx,
     output mem_read, output mem_write, output [3:0] mem_size,
     output reg_en, output reg_write,
@@ -91,17 +95,24 @@ module control(
   wire [4:0] trap_cause;
   wire trap;
   wire csr_invalid;
+  wire [31:0] csr_out;
 
-  decode d(.clk(clk), .inst(inst), .opcode(opcode), .imm(imm),
+  decode d(.inst(inst), .opcode(opcode), .imm(imm),
     .rs1(rs1), .rs2(rs2), .rd(rd), .func3(func3), .func7(func7), .func12(func12), .invalid(decode_invalid_inst));
-  csr_file csr(.clk(clk), .rst(reset), .addr(csr_addr), .bus(bus), .read(csr_read), .write(csr_write),
-    .write_type(func3[1:0]), .trap(trap), .trap_cause(trap_cause), .ret(mret), .invalid(csr_invalid));
+  csr_file csr(.clk, .rst(reset), .addr(csr_addr), .bus, .csr_out, .read(csr_read), .write(csr_write),
+    .write_type(func3[1:0]), .trap, .trap_cause, .ret(mret), .invalid(csr_invalid));
 
   wire [31:0] imm_out = (opcode == 5'b00100 && (func3 == 3'b001 || func3 == 3'b101)) ? {27'b0, imm[4:0]} : imm;
 
-  assign bus = imm_bus ? imm_out : 'z;
-  assign bus = pc_bus | trap ? pc : 'z;
-  assign addr = pc_addr ? pc : 'z;
+  assign control_bout = pc_bus | trap ? pc :
+                        imm_bus ? imm_out :
+                        csr_read ? csr_out :
+                        'x;
+
+  assign control_aout = pc_addr ? pc : 'x;
+
+  assign control_bus = imm_bus | pc_bus | trap | csr_read;
+  assign control_addr = pc_addr;
 
   assign mem_size = load_store ? {func3 == 3'b000, func3 == 3'b100, func3 == 3'b001, func3 == 3'b101} : 4'b0;
 
@@ -113,14 +124,14 @@ module control(
 
   assign reg_idx = r_idx_rs1 ? rs1 :
                    r_idx_rs2 ? rs2 :
-                   r_idx_rd ? rd : 'z;
+                   r_idx_rd ? rd : 'x;
 
   wire cmp = func3 == 3'b000 ? alu_eq :
              func3 == 3'b001 ? !alu_eq :
              func3 == 3'b100 ? alu_lt :
              func3 == 3'b110 ? alu_ltu :
              func3 == 3'b101 ? alu_ge :
-             func3 == 3'b111 ? alu_geu : 'z;
+             func3 == 3'b111 ? alu_geu : 'x;
 
   wire invalid_address = addr > 32'h80000 && (alu_addr || pc_addr);
   wire invalid_fetch_address = state == 0 && invalid_address;
