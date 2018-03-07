@@ -10,7 +10,7 @@ module registers(input clk, input rst, inout [31:0] bus,
   always @(posedge clk) begin
     if (rst) begin
       for (i = 1; i < 32; i = i + 1)
-        regs[i] = 0;
+        regs[i] <= 0;
     end else begin
       if (reg_write && reg_idx != 0)
         regs[reg_idx] <= bus;
