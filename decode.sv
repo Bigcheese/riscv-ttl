@@ -1,4 +1,4 @@
-module decode(input clk, input [31:0] inst, output [4:0] opcode, output [31:0] imm,
+module decode(input [31:0] inst, output [4:0] opcode, output [31:0] imm,
               output [4:0] rs1, output [4:0] rs2, output [4:0] rd, output [2:0] func3,
               output [6:0] func7, output [11:0] func12, output invalid);
   wire [31:0] immI = {{21{inst[31]}}, inst[30:20]};
