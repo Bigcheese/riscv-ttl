@@ -223,14 +223,16 @@ reset_vector:                                                           \
 #define RVTEST_PASS                                                     \
         fence;                                                          \
         li TESTNUM, 1;                                                  \
+        li x31, 1337;                                                   \
         ecall
 
 #define TESTNUM gp
 #define RVTEST_FAIL                                                     \
         fence;                                                          \
 1:      beqz TESTNUM, 1b;                                               \
-        slli TESTNUM, TESTNUM, 1;                                        \
-        ori TESTNUM, TESTNUM, 1;                                         \
+        slli TESTNUM, TESTNUM, 1;                                       \
+        ori TESTNUM, TESTNUM, 1;                                        \
+        li x31, 1337;                                                   \
         ecall
 
 //-----------------------------------------------------------------------

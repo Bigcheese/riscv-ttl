@@ -58,7 +58,7 @@ module main;
 
   always @(negedge clk) begin
     if (r.c.inst[6:0] == 7'b1110011 && r.c.func3 == 0 &&
-        (r.c.inst[31:20] == 12'b000000000001 || r.c.inst[31:20] == 12'b000000000000)) begin
+        r.c.inst[31:20] == 12'b000000000000 && r.r.regs[31] == 1337) begin
       if (r.r.regs[3] != 1) begin
         for (i = 0; i < 32; i = i + 1) begin
           $display("x%0d = %d", i, r.r.regs[i]);
