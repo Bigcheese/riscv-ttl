@@ -103,7 +103,7 @@ module control(
   wire ebreak;
   wire mret;
 
-  wire ecallbreak_trap = ecall || ebreak && state == 1;
+  wire ecallbreak_trap = (ecall || ebreak) && state == 1;
 
   wire [31:0] sys_control = ecall ? 0 :
                             ebreak ? 0 :
