@@ -177,7 +177,7 @@ module control(
   assign pc_write = control_lines[5];
 
   assign mem_read = control_lines[6];
-  assign mem_write = control_lines[7];
+  assign mem_write = control_lines[7] && !trap;
 
   assign reg_en = control_lines[8];
   assign reg_write = control_lines[9] && !trap && (mem_read ? mem_data_ready : 1);
