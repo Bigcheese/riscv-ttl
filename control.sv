@@ -216,7 +216,7 @@ module control(
         pc <= pc + 4;
       else if (pc_write)
         pc <= bus;
-      mem_addr_ready <= (pc_addr | alu_addr) && !mem_data_ready;
+      mem_addr_ready <= (pc_addr | alu_addr) && !mem_data_ready && !trap;
     end
   end
 
