@@ -103,6 +103,8 @@ module control(
   wire ebreak;
   wire mret;
 
+  wire ecallbreak_trap = ecall || ebreak && state == 1;
+
   wire [31:0] sys_control = ecall ? 0 :
                             ebreak ? 0 :
                             mret ? PC_WRITE | CSR_READ : 0;
@@ -153,13 +155,15 @@ module control(
                         (addr[1:0] == 2'b11 && (mem_size[1] || mem_size[0]));
 
   assign trap = invalid_inst | invalid_fetch_address | invalid_load_address | invalid_store_address | csr_invalid |
-                misaliged_addr;
+                misaliged_addr | ecallbreak_trap;
   assign trap_cause = invalid_inst ? 2 :
                       invalid_fetch_address ? 1 :
                       invalid_load_address ? 5 :
                       invalid_store_address ? 7 :
                       csr_invalid ? 2 :
-                      misaliged_addr ? 4 : 'x;
+                      misaliged_addr ? 4 :
+                      ecall ? 11 :
+                      ebreak ? 3 : 'x;
 
   assign csr_addr = mret ? 12'h341 : func12;
 
