@@ -47,7 +47,7 @@ module control(
 
     CSR_READ = 1 << 23,
     CSR_WRITE = 1 << 24,
-    MRET = 1 << 25,
+    SYSTEM0 = 1 << 25,
 
     SYSTEM = 1 << 28,
     BRANCH_STUFF = 1 << 29,
@@ -73,7 +73,7 @@ module control(
 
   wire csr_read;
   wire csr_write;
-  wire mret;
+  wire system0;
 
   wire system;
   wire branch_stuff;
@@ -95,13 +95,22 @@ module control(
   wire decode_invalid_inst;
   wire [4:0] trap_cause;
   wire trap;
-  wire csr_invalid;
+  wire csr_inv;
+  wire csr_invalid = csr_inv && func3 != 0;
   wire [31:0] csr_out;
+
+  wire ecall = func7 == 0 && rs2 == 0;
+  wire ebreak = func7 == 0 && rs2 == 1;
+  wire mret = func7 == 7'b0011000 && rs2 == 5'b00010;
+
+  wire [31:0] sys_control = ecall ? 0 :
+                            ebreak ? 0 :
+                            mret ? PC_WRITE | CSR_READ : 0;
 
   decode d(.inst(inst), .opcode(opcode), .imm(imm),
     .rs1(rs1), .rs2(rs2), .rd(rd), .func3(func3), .func7(func7), .func12(func12), .invalid(decode_invalid_inst));
   csr_file csr(.clk, .rst(reset), .addr(csr_addr), .bus, .csr_out, .read(csr_read), .write(csr_write),
-    .write_type(func3[1:0]), .trap, .trap_cause, .ret(mret), .invalid(csr_invalid));
+    .write_type(func3[1:0]), .trap, .trap_cause, .ret(mret), .invalid(csr_inv));
 
   wire [31:0] imm_out = (opcode == 5'b00100 && (func3 == 3'b001 || func3 == 3'b101)) ? {27'b0, imm[4:0]} : imm;
 
@@ -151,7 +160,7 @@ module control(
                       csr_invalid ? 2 :
                       misaliged_addr ? 4 : 'x;
 
-  assign csr_addr = system && state == 1 && func3 == 3'b0 && func12 == 12'b001100000010 ? 12'h341 : func12;
+  assign csr_addr = mret ? 12'h341 : func12;
 
   assign inst_write = control_lines[0] & mem_data_ready;
 
@@ -188,7 +197,7 @@ module control(
 
   assign csr_read = control_lines[23];
   assign csr_write = control_lines[24];
-  assign mret = control_lines[25];
+  assign system0 = control_lines[25];
 
   assign system = control_lines[28];
 
@@ -282,7 +291,7 @@ module control(
     ops[5'b11100][5] = SYSTEM;
 
     // mret
-    sys_ops[3'b000][1] = PC_WRITE | CSR_READ | MRET | STATE_RESET;
+    sys_ops[3'b000][1] = SYSTEM0 | STATE_RESET;
 
     // read and write
     sys_ops[3'b001][1] = CSR_READ | A_WRITE | STATE_INC; // save existing value
@@ -322,7 +331,9 @@ module control(
       if (trap)
         control_lines <= 0;
       else
-        control_lines <= ops[opcode][state] & SYSTEM ? ops[opcode][state] | sys_ops[func3][state] : ops[opcode][state];
+        control_lines <= (ops[opcode][state] & SYSTEM ?
+                          ops[opcode][state] | sys_ops[func3][state] : ops[opcode][state]) |
+                         (sys_ops[func3][state] & SYSTEM0 ? sys_control : 0);
     end
   end
 endmodule
