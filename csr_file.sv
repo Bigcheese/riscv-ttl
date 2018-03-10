@@ -82,6 +82,8 @@ module csr_file(input clk, input rst, input [11:0] csr_addr, input [31:0] addr, 
         if (trap_cause == 0 || trap_cause == 1 || trap_cause == 4 || trap_cause == 5 || trap_cause == 6 ||
             trap_cause == 7)
           mtval <= addr;
+        else
+          mtval <= 0;
         mstatus_internal[1] <= mstatus_internal[0];
         mstatus_internal[0] <= 0;
       end else if (ret) begin
