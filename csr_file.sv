@@ -1,5 +1,5 @@
-module csr_file(input clk, input rst, input [11:0] addr, input [31:0] bus, output [31:0] csr_out, input read, input write,
-    input [1:0] write_type, input trap, input [4:0] trap_cause, input ret, output invalid);
+module csr_file(input clk, input rst, input [11:0] csr_addr, input [31:0] addr, input [31:0] bus, output [31:0] csr_out,
+    input read, input write, input [1:0] write_type, input trap, input [4:0] trap_cause, input ret, output invalid);
   // mstatus SD | WPRI | TSR | TW | TVM | MXR | SUM | MPRV | XS | FS | MPP M | WPRI | SPP 0 | MPIE | WPRI | SPIE 0 | UPIE 0 |
   // MIE | WPRI | SIE 0 | UIE 0
   `define MVENDORID 12'hF11
@@ -28,7 +28,7 @@ module csr_file(input clk, input rst, input [11:0] addr, input [31:0] bus, outpu
   assign invalid = invalid_out & (read | write);
 
   always @(*) begin
-    case (addr)
+    case (csr_addr)
       `MVENDORID: invalid_out = 0;
       `MARCHID: invalid_out = 0;
       `MIMPID: invalid_out = 0;
@@ -46,7 +46,7 @@ module csr_file(input clk, input rst, input [11:0] addr, input [31:0] bus, outpu
 
   always @(*) begin
     bus_out = 'x;
-    case (addr)
+    case (csr_addr)
       `MVENDORID: bus_out = 0;
       `MARCHID: bus_out = 0;
       `MIMPID: bus_out = 0;
@@ -57,7 +57,7 @@ module csr_file(input clk, input rst, input [11:0] addr, input [31:0] bus, outpu
       `MSCRATCH: bus_out = mscratch;
       `MEPC: bus_out = mepc;
       `MCAUSE: bus_out = {27'b0, mcause};
-      `MTVAL: bus_out = 0;
+      `MTVAL: bus_out = mtval;
     endcase
   end
 
@@ -79,13 +79,16 @@ module csr_file(input clk, input rst, input [11:0] addr, input [31:0] bus, outpu
       if (trap) begin
         mcause <= trap_cause;
         mepc <= bus;
+        if (trap_cause == 0 || trap_cause == 1 || trap_cause == 4 || trap_cause == 5 || trap_cause == 6 ||
+            trap_cause == 7)
+          mtval <= addr;
         mstatus_internal[1] <= mstatus_internal[0];
         mstatus_internal[0] <= 0;
       end else if (ret) begin
         mstatus_internal[0] <= mstatus_internal[1];
         mstatus_internal[1] <= 1;
       end else if (write) begin
-      case (addr)
+      case (csr_addr)
           `MSTATUS: mstatus_internal <= {mstatus_temp[7], mstatus_temp[3]};
           `MSCRATCH: mscratch <= csr_write_value(write_type, mscratch, bus);
           `MEPC: mepc <= csr_write_value(write_type, mepc, bus);
