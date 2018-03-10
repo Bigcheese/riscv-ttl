@@ -99,16 +99,17 @@ module control(
   wire csr_invalid = csr_inv && func3 != 0;
   wire [31:0] csr_out;
 
-  wire ecall = func7 == 0 && rs2 == 0;
-  wire ebreak = func7 == 0 && rs2 == 1;
-  wire mret = func7 == 7'b0011000 && rs2 == 5'b00010;
+  wire ecall;
+  wire ebreak;
+  wire mret;
 
   wire [31:0] sys_control = ecall ? 0 :
                             ebreak ? 0 :
                             mret ? PC_WRITE | CSR_READ : 0;
 
   decode d(.inst(inst), .opcode(opcode), .imm(imm),
-    .rs1(rs1), .rs2(rs2), .rd(rd), .func3(func3), .func7(func7), .func12(func12), .invalid(decode_invalid_inst));
+    .rs1(rs1), .rs2(rs2), .rd(rd), .func3(func3), .func7(func7), .func12(func12), .ecall, .ebreak, .mret,
+    .invalid(decode_invalid_inst));
   csr_file csr(.clk, .rst(reset), .addr(csr_addr), .bus, .csr_out, .read(csr_read), .write(csr_write),
     .write_type(func3[1:0]), .trap, .trap_cause, .ret(mret), .invalid(csr_inv));
 
