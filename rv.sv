@@ -1,5 +1,5 @@
 module rv(input clk, input rst, output mem_read, output mem_write, output [31:0] mem_addr, output [31:0] mem_wdata,
-          output [3:0] mem_wstrb, input [31:0] mem_rdata);
+          output [3:0] mem_wstrb, input [31:0] mem_rdata, output mem_addr_ready, input mem_data_ready);
   reg [31:0] pc;
   reg [31:0] a;
   reg [31:0] b;
@@ -72,7 +72,7 @@ module rv(input clk, input rst, output mem_read, output mem_write, output [31:0]
   alu ar(.alu_out, .a, .b, .op(alu_op), .sub_en(alu_sub), .sra_en(alu_sra), .alu_eq, .alu_lt, .alu_ltu, .alu_ge,
          .alu_geu);
   control c(.clk, .reset(rst), .addr, .bus, .control_aout, .control_bout, .control_bus, .control_addr, .reg_idx,
-            .mem_write, .mem_read, .mem_size, .reg_en,
+            .mem_write, .mem_read, .mem_size, .mem_addr_ready, .mem_data_ready, .reg_en,
             .reg_write, .a_bus, .a_addr, .a_write,
             .b_bus, .b_addr, .b_write,
             .alu_bus, .alu_addr, .alu_op, .alu_sub, .alu_sra, .alu_eq,

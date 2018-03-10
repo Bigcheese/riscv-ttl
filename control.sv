@@ -9,6 +9,7 @@ module control(
     output control_addr,
     output [4:0] reg_idx,
     output mem_read, output mem_write, output [3:0] mem_size,
+    output reg mem_addr_ready, input mem_data_ready,
     output reg_en, output reg_write,
     output a_bus, output a_addr, output a_write, output b_bus,
     output b_addr, output b_write,
@@ -152,7 +153,7 @@ module control(
 
   assign csr_addr = system && state == 1 && func3 == 3'b0 && func12 == 12'b001100000010 ? 12'h341 : func12;
 
-  assign inst_write = control_lines[0];
+  assign inst_write = control_lines[0] & mem_data_ready;
 
   assign imm_bus = control_lines[1];
 
@@ -165,7 +166,7 @@ module control(
   assign mem_write = control_lines[7];
 
   assign reg_en = control_lines[8];
-  assign reg_write = control_lines[9] && !trap;
+  assign reg_write = control_lines[9] && !trap && (mem_read ? mem_data_ready : 1);
 
   assign a_bus = control_lines[10];
   assign a_addr = control_lines[11];
@@ -194,13 +195,14 @@ module control(
   assign branch_stuff = control_lines[29];
 
   assign state_reset = branch_stuff ? (cmp ? 0 : 1) : control_lines[30];
-  assign state_inc = branch_stuff ? (cmp ? 1 : 0) : control_lines[31];
+  assign state_inc = (branch_stuff ? (cmp ? 1 : 0) : control_lines[31]) && (mem_read ? mem_data_ready : 1);
 
   always @(posedge clk) begin
     if (reset) begin
       state <= 0;
       inst <= 0;
       pc <= 0;
+      mem_addr_ready <= 0;
     end else begin
       if (inst_write && !trap)
         inst <= bus;
@@ -214,6 +216,7 @@ module control(
         pc <= pc + 4;
       else if (pc_write)
         pc <= bus;
+      mem_addr_ready <= (pc_addr | alu_addr) && !mem_data_ready;
     end
   end
 

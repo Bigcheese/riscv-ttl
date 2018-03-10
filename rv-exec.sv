@@ -1,9 +1,7 @@
-module mem #(parameter SIZE = 8192)(input clk, input [31:0] addr, input [31:0] in, output [31:0] out, input write,
-                                    input [3:0] mem_wstrb);
+module mem #(parameter SIZE = 8192)(input clk, input [31:0] addr, input [31:0] in, output reg [31:0] out, input write,
+                                    input [3:0] mem_wstrb, input mem_addr_ready, output reg mem_data_ready);
   reg [31:0] mem[SIZE];
   wire [31:0] data_out;
-
-  assign out = mem[addr >> 2];
 
   reg [7:0] in0, in1, in2, in3;
 
@@ -18,6 +16,8 @@ module mem #(parameter SIZE = 8192)(input clk, input [31:0] addr, input [31:0] i
     if (write) begin
       mem[addr >> 2] <= {in3, in2, in1, in0};
     end
+    out <= mem[addr >> 2];
+    mem_data_ready <= mem_addr_ready;
   end
 endmodule
 
@@ -34,9 +34,13 @@ module main;
   wire [3:0] mem_wstrb;
   wire [31:0] mem_wdata;
   wire [31:0] mem_rdata;
+  wire mem_addr_ready;
+  wire mem_data_ready;
 
-  mem m(.clk, .addr, .in(mem_wdata), .out(mem_rdata), .write(mem_write), .mem_wstrb);
-  rv r(.clk, .rst(reset), .mem_write, .mem_addr(addr), .mem_wdata, .mem_wstrb, .mem_rdata);
+  mem m(.clk, .addr, .in(mem_wdata), .out(mem_rdata), .write(mem_write), .mem_wstrb, .mem_addr_ready,
+        .mem_data_ready);
+  rv r(.clk, .rst(reset), .mem_write, .mem_addr(addr), .mem_wdata, .mem_wstrb, .mem_rdata, .mem_addr_ready,
+       .mem_data_ready);
 
   always #1 clk = ~clk;
 
