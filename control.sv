@@ -161,7 +161,7 @@ module control(
                       invalid_load_address ? 5 :
                       invalid_store_address ? 7 :
                       csr_invalid ? 2 :
-                      misaliged_addr ? 4 :
+                      misaliged_addr ? (opcode[3] ? 6 : 4) :
                       ecall ? 11 :
                       ebreak ? 3 : 'x;
 
