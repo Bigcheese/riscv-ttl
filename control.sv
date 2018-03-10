@@ -194,7 +194,7 @@ module control(
 
   assign branch_stuff = control_lines[29];
 
-  assign state_reset = branch_stuff ? (cmp ? 0 : 1) : control_lines[30];
+  assign state_reset = (branch_stuff ? (cmp ? 0 : 1) : control_lines[30]) && (mem_read ? mem_data_ready : 1);
   assign state_inc = (branch_stuff ? (cmp ? 1 : 0) : control_lines[31]) && (mem_read ? mem_data_ready : 1);
 
   always @(posedge clk) begin
