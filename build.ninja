@@ -21,6 +21,12 @@ rule ld
 rule bin
   command = $OBJCOPY -O=binary $in $out
 
+rule hex
+  command = sh -c "python makehex.py $in 100 > $out"
+
+rule cp
+  command = cp $in $out
+
 build decode.vvp: iv decode.sv decode-tb.sv
 build decode-tb.dmp: vvp decode.vvp
 
@@ -30,6 +36,12 @@ build rv-tb.dmp: vvp rv.vvp
 
 build rv-exec.vvp: iv decode.sv registers.sv alu.sv csr_file.sv control.sv $
     rv.sv rv-exec.sv
+
+build boot.o: as boot.s | $CLANG
+build boot.elf: ld boot.o
+build boot.bin: bin boot.elf
+build boot.hex: hex boot.bin
+build fpga/fpga.srcs/sources_1/new/boot.txt: cp boot.hex
 
 build test/addi.o: as test/addi.S | $CLANG
 build test/addi.elf: ld test/addi.o
