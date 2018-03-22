@@ -1,5 +1,5 @@
 module rv(input clk, input rst, output mem_read, output mem_write, output [31:0] mem_addr, output [31:0] mem_wdata,
-          output [3:0] mem_wstrb, input [31:0] mem_rdata, output mem_addr_ready, input mem_data_ready);
+          output [3:0] mem_wstrb, input [31:0] mem_rdata, output mem_addr_ready, input mem_data_ready, input eip);
   reg [31:0] pc;
   reg [31:0] a;
   reg [31:0] b;
@@ -76,7 +76,7 @@ module rv(input clk, input rst, output mem_read, output mem_write, output [31:0]
             .reg_write, .a_bus, .a_addr, .a_write,
             .b_bus, .b_addr, .b_write,
             .alu_bus, .alu_addr, .alu_op, .alu_sub, .alu_sra, .alu_eq,
-            .alu_lt, .alu_ltu, .alu_ge, .alu_geu);
+            .alu_lt, .alu_ltu, .alu_ge, .alu_geu, .eip);
 
   always @(posedge clk) cycles = cycles + 1;
 

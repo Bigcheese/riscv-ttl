@@ -40,7 +40,7 @@ module main;
   mem m(.clk, .addr, .in(mem_wdata), .out(mem_rdata), .write(mem_write), .mem_wstrb, .mem_addr_ready,
         .mem_data_ready);
   rv r(.clk, .rst(reset), .mem_write, .mem_addr(addr), .mem_wdata, .mem_wstrb, .mem_rdata, .mem_addr_ready,
-       .mem_data_ready);
+       .mem_data_ready, .eip(0));
 
   always #1 clk = ~clk;
 

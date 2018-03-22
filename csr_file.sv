@@ -1,5 +1,6 @@
 module csr_file(input clk, input rst, input [11:0] csr_addr, input [31:0] addr, input [31:0] bus, output [31:0] csr_out,
-    input read, input write, input [1:0] write_type, input trap, input [4:0] trap_cause, input ret, output invalid);
+    input read, input write, input [1:0] write_type, input trap, input [4:0] trap_cause, input take_external_interupt,
+    input ret, output invalid);
   // mstatus SD | WPRI | TSR | TW | TVM | MXR | SUM | MPRV | XS | FS | MPP M | WPRI | SPP 0 | MPIE | WPRI | SPIE 0 | UPIE 0 |
   // MIE | WPRI | SIE 0 | UIE 0
   `define MVENDORID 12'hF11
@@ -18,7 +19,7 @@ module csr_file(input clk, input rst, input [11:0] csr_addr, input [31:0] addr, 
   wire [31:0] mtvec = 32'h4;
   reg [31:0] mscratch;
   reg [31:0] mepc;
-  reg [4:0] mcause;
+  reg [5:0] mcause;
   reg [31:0] mtval;
 
   reg [31:0] bus_out;
@@ -56,7 +57,7 @@ module csr_file(input clk, input rst, input [11:0] csr_addr, input [31:0] addr, 
       `MTVEC: bus_out = mtvec;
       `MSCRATCH: bus_out = mscratch;
       `MEPC: bus_out = mepc;
-      `MCAUSE: bus_out = {27'b0, mcause};
+      `MCAUSE: bus_out = {mcause[5], 26'b0, mcause[4:0]};
       `MTVAL: bus_out = mtval;
     endcase
   end
@@ -77,7 +78,7 @@ module csr_file(input clk, input rst, input [11:0] csr_addr, input [31:0] addr, 
       mtval <= 0;
     end else begin
       if (trap) begin
-        mcause <= trap_cause;
+        mcause <= {take_external_interupt, trap_cause};
         mepc <= bus;
         if (trap_cause == 0 || trap_cause == 1 || trap_cause == 4 || trap_cause == 5 || trap_cause == 6 ||
             trap_cause == 7)

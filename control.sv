@@ -14,7 +14,8 @@ module control(
     output a_bus, output a_addr, output a_write, output b_bus,
     output b_addr, output b_write,
     output alu_bus, output alu_addr, output [2:0] alu_op, output alu_sub, output alu_sra,
-    input alu_eq, input alu_lt, input alu_ltu, input alu_ge, input alu_geu
+    input alu_eq, input alu_lt, input alu_ltu, input alu_ge, input alu_geu,
+    input eip
   );
 
   reg [31:0] control_lines;
@@ -109,11 +110,25 @@ module control(
                             ebreak ? 0 :
                             mret ? PC_WRITE | CSR_READ : 0;
 
+  reg eip0 = 0;
+  reg eip1 = 0;
+  reg eiptake = 0;
+  wire take_external_interupt = eiptake && state_reset;
+
+  always @(posedge clk) begin
+    eip0 <= eip;
+    eip1 <= eip0;
+    if (eiptake && take_external_interupt)
+      eiptake <= 0;
+    else if (eiptake == 0)
+      eiptake <= eip0 == 1 && eip1 == 0;
+  end
+
   decode d(.inst(inst), .opcode(opcode), .imm(imm),
     .rs1(rs1), .rs2(rs2), .rd(rd), .func3(func3), .func7(func7), .func12(func12), .ecall, .ebreak, .mret,
     .invalid(decode_invalid_inst));
   csr_file csr(.clk, .rst(reset), .csr_addr, .addr, .bus, .csr_out, .read(csr_read), .write(csr_write),
-    .write_type(func3[1:0]), .trap, .trap_cause, .ret(mret), .invalid(csr_inv));
+    .write_type(func3[1:0]), .trap, .trap_cause, .take_external_interupt, .ret(mret), .invalid(csr_inv));
 
   wire [31:0] imm_out = (opcode == 5'b00100 && (func3 == 3'b001 || func3 == 3'b101)) ? {27'b0, imm[4:0]} : imm;
 
@@ -155,7 +170,7 @@ module control(
                         (addr[1:0] == 2'b11 && (mem_size[1] || mem_size[0]));
 
   assign trap = invalid_inst | invalid_fetch_address | invalid_load_address | invalid_store_address | csr_invalid |
-                misaliged_addr | ecallbreak_trap;
+                misaliged_addr | ecallbreak_trap | take_external_interupt;
   assign trap_cause = invalid_inst ? 2 :
                       invalid_fetch_address ? 1 :
                       invalid_load_address ? 5 :
@@ -163,7 +178,8 @@ module control(
                       csr_invalid ? 2 :
                       misaliged_addr ? (opcode[3] ? 6 : 4) :
                       ecall ? 11 :
-                      ebreak ? 3 : 'x;
+                      ebreak ? 3 :
+                      take_external_interupt ? 11 : 'x;
 
   assign csr_addr = mret ? 12'h341 : func12;
 
