@@ -110,19 +110,23 @@ module control(
                             ebreak ? 0 :
                             mret ? PC_WRITE | CSR_READ : 0;
 
-  reg eip0 = 0;
-  reg eip1 = 0;
-  reg eiptake = 0;
-  wire take_external_interupt = eiptake && state_reset;
+  reg prev_eip;
+  reg external_int;
 
   always @(posedge clk) begin
-    eip0 <= eip;
-    eip1 <= eip0;
-    if (eiptake && take_external_interupt)
-      eiptake <= 0;
-    else if (eiptake == 0)
-      eiptake <= eip0 == 1 && eip1 == 0;
+    if (reset) begin
+      prev_eip <= 0;
+      external_int <= 0;
+    end else begin
+      prev_eip <= eip;
+      if (eip && !prev_eip)
+        external_int <= 1;
+      else if (take_external_interupt)
+        external_int <= 0;
+    end
   end
+
+  wire take_external_interupt = external_int && state_reset;
 
   decode d(.inst(inst), .opcode(opcode), .imm(imm),
     .rs1(rs1), .rs2(rs2), .rd(rd), .func3(func3), .func7(func7), .func12(func12), .ecall, .ebreak, .mret,
