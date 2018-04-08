@@ -131,7 +131,7 @@ module control(
   decode d(.inst(inst), .opcode(opcode), .imm(imm),
     .rs1(rs1), .rs2(rs2), .rd(rd), .func3(func3), .func7(func7), .func12(func12), .ecall, .ebreak, .mret,
     .invalid(decode_invalid_inst));
-  csr_file csr(.clk, .rst(reset), .csr_addr, .addr, .bus, .csr_out, .read(csr_read), .write(csr_write),
+  csr_file csr(.clk, .rst(reset), .csr_addr, .addr, .bus, .pc, .csr_out, .read(csr_read), .write(csr_write),
     .write_type(func3[1:0]), .trap, .trap_cause, .take_external_interupt, .ret(mret), .invalid(csr_inv));
 
   wire [31:0] imm_out = (opcode == 5'b00100 && (func3 == 3'b001 || func3 == 3'b101)) ? {27'b0, imm[4:0]} : imm;

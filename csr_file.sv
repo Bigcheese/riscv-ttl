@@ -1,4 +1,5 @@
-module csr_file(input clk, input rst, input [11:0] csr_addr, input [31:0] addr, input [31:0] bus, output [31:0] csr_out,
+module csr_file(input clk, input rst, input [11:0] csr_addr, input [31:0] addr, input [31:0] bus, input [31:0] pc,
+    output [31:0] csr_out,
     input read, input write, input [1:0] write_type, input trap, input [4:0] trap_cause, input take_external_interupt,
     input ret, output invalid);
   // mstatus SD | WPRI | TSR | TW | TVM | MXR | SUM | MPRV | XS | FS | MPP M | WPRI | SPP 0 | MPIE | WPRI | SPIE 0 | UPIE 0 |
@@ -79,7 +80,7 @@ module csr_file(input clk, input rst, input [11:0] csr_addr, input [31:0] addr, 
     end else begin
       if (trap) begin
         mcause <= {take_external_interupt, trap_cause};
-        mepc <= bus;
+        mepc <= pc;
         if (trap_cause == 0 || trap_cause == 1 || trap_cause == 4 || trap_cause == 5 || trap_cause == 6 ||
             trap_cause == 7)
           mtval <= addr;
