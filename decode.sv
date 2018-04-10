@@ -1,6 +1,7 @@
 module decode(input [31:0] inst, output [4:0] opcode, output [31:0] imm,
               output [4:0] rs1, output [4:0] rs2, output [4:0] rd, output [2:0] func3,
-              output [6:0] func7, output [11:0] func12, output ecall, output ebreak, output mret, output invalid);
+              output [6:0] func7, output [11:0] func12, output ecall, output ebreak, output mret, output branch,
+              output invalid);
   wire [31:0] immI = {{21{inst[31]}}, inst[30:20]};
 
   wire [31:0] immS = {{21{inst[31]}}, inst[30:25], inst[11:7]};
@@ -43,6 +44,7 @@ module decode(input [31:0] inst, output [4:0] opcode, output [31:0] imm,
   assign ecall = system0 && func7 == 0 && rs2 == 0;
   assign ebreak = system0 && func7 == 0 && rs2 == 1;
   assign mret = system0 && func7 == 7'b0011000 && rs2 == 5'b00010;
+  assign branch = opcode == 5'b11011 || opcode == 5'b11001 || opcode == 5'b11000;
 
   assign invalid = !(R | I | S | B| U | J | Z | NA) || inst[1:0] != 2'b11;
 endmodule

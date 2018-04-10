@@ -103,6 +103,7 @@ module control(
   wire ecall;
   wire ebreak;
   wire mret;
+  wire branch;
 
   wire ecallbreak_trap = (ecall || ebreak) && state == 1;
 
@@ -126,10 +127,10 @@ module control(
     end
   end
 
-  wire take_external_interupt = external_int && state_reset;
+  wire take_external_interupt = external_int && state_reset && !branch;
 
   decode d(.inst(inst), .opcode(opcode), .imm(imm),
-    .rs1(rs1), .rs2(rs2), .rd(rd), .func3(func3), .func7(func7), .func12(func12), .ecall, .ebreak, .mret,
+    .rs1(rs1), .rs2(rs2), .rd(rd), .func3(func3), .func7(func7), .func12(func12), .ecall, .ebreak, .mret, .branch,
     .invalid(decode_invalid_inst));
   csr_file csr(.clk, .rst(reset), .csr_addr, .addr, .bus, .pc, .csr_out, .read(csr_read), .write(csr_write),
     .write_type(func3[1:0]), .trap, .trap_cause, .take_external_interupt, .ret(mret), .invalid(csr_inv));
